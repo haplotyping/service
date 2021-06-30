@@ -1,0 +1,6 @@
+.DS_Store
+src/server.ini
+src/server_*.ini
+!src/server_demo.ini
+src/static/node_modules
+src/static/package-lock.json
