@@ -108,7 +108,7 @@ $( function() {
                 if(createLinks) {
                     container.append($("<span class=\"text-dark\" />").text("["));
                     container.append($("<a class=\"text-decoration-none\"/>").text(parents[i].name)
-                                     .attr("href",rootLocation+"variety/"+encodeURIComponent(parents[i].uid)));
+                                     .attr("href", "variety/"+encodeURIComponent(parents[i].uid)));
                     container.append($("<span class=\"text-dark\" />").text("]"));
                 } else {
                     container.append($("<span />").text(parents[i].name));    
@@ -131,7 +131,7 @@ $( function() {
               success: function(response) {
                 $("#block-info").removeClass("d-none").html("").show();  
                 if(!response.uid) {
-                    $(location).prop("href", rootLocation+"variety/");
+                    $(location).prop("href", "variety/");
                 } else {
                     var cardContainer = $("<div class=\"card mt-3 mb-3\"/>");
                     var cardHeader = $("<div class=\"card-header font-weight-bold bg-primary text-white\"/>");
@@ -169,7 +169,7 @@ $( function() {
                         var offspringRow = $("<td class=\"col-3\"/>").attr("scope","row");
                         for (var i=0;i<response.offspring.length;i++) {
                             offspringRow.append($("<div/>").append($("<a class=\"text-decoration-none\"/>").attr("href",
-                                   rootLocation+"variety/"+encodeURIComponent(response.offspring[i].uid))
+                                   "variety/"+encodeURIComponent(response.offspring[i].uid))
                                                            .text(response.offspring[i].name)));
                         }
                         cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Offspring"))
@@ -189,7 +189,7 @@ $( function() {
                                                     $("<a class=\"text-decoration-none\"/>")
                                                         .text(response.datasets[i].collection.name)
                                                         .attr("href",
-                                                              rootLocation + "collection/" + 
+                                                              "collection/" + 
                                                               encodeURIComponent(response.datasets[i].collection.uid))))
                                                  .append($("<td/>").text(response.datasets[i].collection.type)));
                         }
@@ -277,7 +277,7 @@ $( function() {
               },
               error: function(xhr) {
                 //Do Something to handle error
-                $(location).prop("href", rootLocation+"variety/");  
+                $(location).prop("href", "variety/");  
               }
             });    
                 
@@ -297,12 +297,12 @@ $( function() {
                 if(response.total>0) {
                     if((response.total==1) && (response.list.length==1)) {
                         //redirect
-                        $(location).prop("href", rootLocation+"variety/"+encodeURIComponent(response.list[0].uid));  
+                        $(location).prop("href", "variety/"+encodeURIComponent(response.list[0].uid));  
                     } else {    
                         var listContainer = $("<div class=\"list-group\"/>");
                         for (var i = 0; i < response.list.length; i++) {
                           var entry = $("<a class=\"list-group-item d-flex justify-content-between align-items-start\"/>")
-                          entry.attr("href",rootLocation+"variety/"+response.list[i].uid);
+                          entry.attr("href", "variety/"+response.list[i].uid);
                           var entryContent = $("<div class=\"ms-2 me-auto\"/>");
                           entry.append(entryContent);
                           var entryContentMain = $("<div/>");
