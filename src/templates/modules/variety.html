@@ -1,0 +1,20 @@
+<!-- START BLOCK VARIETY -->
+{% if identifier %}
+<div id="block-info" class="pt-3"></div>
+{% else %}
+<div id="block-search" class="pt-3">
+    <div class="pb-3">
+        <form class="variety" action="{{ rootLocation}}variety/">
+            <div class="input-group">  
+                <button class="btn btn-secondary p-1 pl-2 d-none d-sm-block">Search variety</button>
+                <input name="name" type="search" class="form-control variety" autocapitalize="off" autocomplete="off" placeholder="" autofocus>       
+                <a href="{{ rootLocation}}variety/" class="btn btn-secondary d-none d-sm-block" role="button"><i class="text-white fas fa-undo" title="[reset]"></i></a>
+                <button type="submit" class="btn btn-primary d-none d-sm-block"><i class="fas fa-search" title="zoek"></i></button>
+            </div>
+        </form>
+    </div>
+    <div id="variety-list" class="list-group"></div>
+</div>
+<div id="block-info" class="pt-3 d-none"></div> 
+{% endif %}
+<!-- END BLOCK VARIETY -->

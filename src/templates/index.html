@@ -3,13 +3,14 @@
     <head>
         <meta charset="utf-8">
         <title>User Interface API</title>
+        <base href="{{ rootLocation}}">
         <link rel="stylesheet" href="static/node_modules/jquery-ui-dist/jquery-ui.min.css">
         <link rel="stylesheet" href="static/node_modules/bootstrap/dist/css/bootstrap.min.css" />
         <link rel="stylesheet" href="static/node_modules/@fortawesome/fontawesome-free/css/all.min.css" />
         <link rel="stylesheet" media="all" href="static/css/style.css" />
         <link rel="shortcut icon" href="static/favicon.ico" type="image/x-icon" />
     </head>
-    <body class="background bg-white">
+    <body id="appeltaart" class="background bg-white" data-api="{{ rootLocation }}api/" data-root="{{ rootLocation }}" data-operation="{{ operation }}" data-identifier="{{ identifier }}">
         <!-- START HEADER -->
         <header>
             <div class="container p-0">
@@ -20,9 +21,13 @@
         </header>  
         <!-- END HEADER -->    
         <main class="container-fluid flex-fill">
-            <div class="pt-3">
-                TODO
-            </div>    
+            {% if operation == "variety" %}
+            {% include "modules/variety.html" %}
+            {% elif operation == "collection" %}
+            {% include "modules/collection.html" %}
+            {% else %}
+            {% include "modules/home.html" %}
+            {% endif %}
         </main>
         <!-- START FOOTER -->
         <footer>
@@ -35,6 +40,7 @@
         <script type="text/javascript" src="static/node_modules/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js"></script>
         <script type="text/javascript" src="static/node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
         <script type="text/javascript" src="static/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
+        <script type="text/javascript" src="static/node_modules/d3/dist/d3.min.js"></script>
         <script type="text/javascript" src="static/javascript/script.js"></script>
     </body>
 </html>
