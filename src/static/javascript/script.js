@@ -7,18 +7,20 @@ $( function() {
     var identifier = $("body").data("identifier");    
     var searchParams = new URLSearchParams(window.location.search)
     
-    function visualizeKmerDensity(container,sequence,response,title) {
+    function visualizeKmerDensity(container,sequence,response,title,collection) {
         var k = response.info.kmer_length;
         var n = sequence.length - k + 1;
         if(n<=0) {
             container.append($("<div/>")
                                .append($("<strong/>").text(title))
-                               .append($("<span/>")
-                                       .text(", sequence too short! (k-mer size is "+k+")")));    
+                               .append($("<span class=\"small\"/>").text(", "+collection))
+                               .append($("<span class=\"text-warning bg-dark mx-1\"/>")
+                                       .text("sequence too short! (k-mer size is "+k+")")));    
         } else {
             container.append($("<div/>")
                                .append($("<strong/>").text(title))
-                               .append($("<span/>")
+                               .append($("<span class=\"small\"/>").text(", "+collection))
+                               .append($("<span class=\"small\"/>")
                                        .text(", "+(sequence.length-k+1-response.stats.positive)+" missing k-mers")));        
             bins = []
             for (var i = 0; i < n; i++) {
@@ -225,7 +227,6 @@ $( function() {
                         var formContainer = $("<div class=\"form-floating\"/>");
                         var formTextarea = $("<textarea class=\"form-control\" placeholder=\"Enter sequence\" "+
                                              "id=\"sequence\" style=\"height: 100px\"/>");
-                        formTextarea.val("CCAAACAGTATAAATTCAACATGTGAAGTAAGCCTACGTATGCCAAACTCAGCAATTCTTACGATGAAACAAAAATAATCTTGCTCTCCAAGAACAAGACTTCCTAATTCTTCCACTCCACTACTATATATGACCTTTAAAGCATTCTTCCCGTTTAACCTGCTTAGGCATATGTTTTGATCATTTGGATTCTATTATGAGATTCAACGAGAATCACATCACGAGAGTATTCTAAAAACCGAAATTACAAAATCAATGTTTTCAATACCATACCATTCAGGTCCGTACCATGCCCACCCCTAACGGTGAAAATCTAATAAACTATGGGAAGTGTATCGGTATAGTCCACCCCTTAAAGGCAATCTCTTGAACAAAGCTCTCCCACCTCAATTGATTCCAAAAGCCCAAGGCCCCTGGACCCACTTGTTTCAACCTCCTTGTGGCTTGACCCCACCTTCCGGCCCCACCAGAATCACCAGCCACCACAAGATAATGAAAAAACTTTTCCTACCCATTAACTTCCCTCCACATGTTTCCCTTGGATTCTCTCCCCACTTGATAGTTGCCTACTGTTATTTTCCCTCCTTTCCCCCTTCATATTCCACAGTGCCCCATAAGTCTGCAGCATACCTGCTAAACTTCAGTATTCGAAGTACAACAGAAAATAGAGAGCAAGAAGAAAAAATAGGCCAAAAATAGTTCAATGTTGAAAAAGGAGAACAGTGGGGGTTTTGATGGCAGCAGCAATTACTGGGCAAGAGTGTGTGACAGTTGCCGTTTAGTTACCTGTACCATTTACTGCCAGGCGGATTCTGCCTATTTGTGTGCAGGCTGTGACGCCCGCATACATGCAGCAAGTCTGGTGGCTTCTCGTCACAAGCGTGTGTGGGTTTGTGAGGCCTGCGAGTGTGCCCCTGCAGCCTTTCTTTGCAAGGCGGATGCTGCCTCACTTTGTGCCTCCTGCGATGCTGACATCCATTCTGCCAACCCCTTGGCACATCGTCACCACCGTATCCCAATTATTCCCATTCCAGGTAGCCACCATTTTTCTTCACACAGACCATATATACTCCTACATGAGAAAAATAACAAAATTTTCAATATATATGGTTTCTAAACCATAATATCAAAAGTGTAATGTTTTAAATAATAAAAAACATAAAAATTGAACTCATCAAACTTAAATTCTAAATTTGGCTCTGATTCCAATCTCCAGGAACCCTTTATGGTCCTCCAGCTGTTGACACTGTTGGCGGTGATTCTATGATGATTGGTGGGTCCACGGGGGAAGGAACGGAGGATGATGGGTTCTTGAGTTTGACACAAGATGCAGATGATACGACTATAGATGAAGAAGATGAAGATGAAGCAGCTTCATGGTTGTTGCTGAATCATCCTGTTAAGGACAACAATAAGAACAACGTTCACAATAACAACAATCAAACTAACATCTATGGTATGTTGTTTGCTGGGGAAGTAGTCGATGACTACTTGGATCTTGCAGAATATGGAGGGGATAGTCAGTTTAATGATCAGTACAATGTTAACCAACAGCAACAACACTACTCTGTTCCTCAGAAGAGCTATGGTGGAGATAGTGTGGTGCCTGTTCAGGACGGTCAGGGAAAGTCTCTATTTTTTTACCACCACCAACAACAAAGTCACCACCTGAATTTTCAGCTGGGGATGGATTATGACAATTCTTACACTCGACTCGGTTACCCTGCTTCTATGAGTCACAGTGTATGTTTTCTTCACTTTATCCATATATCTCAATTCAAGCAATATGCACTTTCAATTCATGAGTTGTCTTAAAGAATCTCCACCTTTTTTGCTTTTGCTTTGGCTTTCTTTTGAAACTTGATTTAACACAACGTTACAACGTTCATGTTGTTAATCAGCGACATCCTACACGGATGTTGCTGTAGTTTTATGTCCTGATCATCAAGATAAATCCTGCAGTCTTGCTAGTCTGTTTTCTTGAATGAGATGGATCTAAACTTTTATGCCTTATTTTTTTATCTTTTAAGTGATAGTTAACCGGAGCGATAACCCCTATTGTTTTCTTTATCAGGTTTCTGTTTCGTCGATGGATGTCAGTGTAGTCCCAGAATCTGCACTAAGTGAAACTTCAAACTCCCACTCACGACCTCAAAAAGGGACCATTGACCTTTTCTCAGGCCCTCCAATTCAGATACCTCCCCAGCTTACTCCAATGGACAGAGAAGCCAGAGTCCTACGGTACAGAGAGAAGAAGAAGAATCGTAAATTTGAGAAAACCATAAGGTATGCTTCAAGAAAAGCCTATGCAGAAACAAGGCCAAGAATCAAAGGTAGATTTGCAAAGAGAACGGACGTAGAGGCTGAAGTATACCAGATGTTCTCCACACAATTAATGGCAGATAGCAGTTATAGAATTGTCCCT");
                         formContainer.append(formTextarea);
                         var formLabel = $("<label for=\"sequence\"/>").text("Sequence");
                         formContainer.append(formLabel);
@@ -238,11 +239,17 @@ $( function() {
                         cardFormContainer.append(cardFormBody);
                         cardForm.append(cardFormContainer);
                         $("#block-info").append(cardForm);
-                            
+                        
                         cardFormContainer.submit(function (e) {
                             e.preventDefault();
                             var datasetUid = $(this).find("select option:selected").val();
                             var sequence = $.trim($(this).find("textarea").val());
+                            var collection = datasetUid;
+                            for (var i=0;i<response.datasets.length;i++) {
+                                if(response.datasets[i].uid==datasetUid) {
+                                    collection = response.datasets[i].collection.name;
+                                }
+                            }
                             if(datasetUid && sequence) {
                                 var oThis = $(this);
                                 oThis.find("button").attr("disabled",true);
@@ -254,14 +261,17 @@ $( function() {
                                   data: JSON.stringify({"sequence": sequence, "mismatches": 0}),
                                   success: function(subResponse) {
                                       var cardResult = $("<div class=\"card mt-3 mb-3\"/>");
-                                      var cardResultHeader = $("<div class=\"card-header font-weight-bold bg-secundary text-dark\"/>").text("Result for sequence of length "+sequence.length);
+                                      var cardResultHeader = $("<div "+
+                                           "class=\"card-header font-weight-bold bg-secundary text-dark\"/>")
+                                          .text("Result for sequence of length "+sequence.length);
                                       cardResult.append(cardResultHeader);                  
                                       var cardResultBody = $("<div class=\"card-body\"/>");
                                       var cardResultVisualization = $("<div/>");
                                       cardResultBody.append(cardResultVisualization);
                                       cardResult.append(cardResultBody); 
                                       $("#block-info").append(cardResult);
-                                      visualizeKmerDensity(cardResultVisualization,sequence,subResponse,response.name);
+                                      visualizeKmerDensity(cardResultVisualization,sequence,
+                                                           subResponse,response.name,collection);
                                       oThis.find("button").removeAttr("disabled");
                                       //check ancestors and offspring
                                   },
