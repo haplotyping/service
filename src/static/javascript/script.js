@@ -96,7 +96,7 @@ $( function() {
                 return true;
             }
         });
-        var container = $("<span class=\"text-secondary\"/>");
+        var container = $("<span class=\"fw-light\"/>");
         if(createBrackets) {
             container.append($("<span class=\"text-dark\" />").text("("));
         }
@@ -123,7 +123,65 @@ $( function() {
         return container;
     }
     
-    if(operation=="variety") {
+    $(".autocomplete-uid").each(function() {
+        console.log("HOI");
+        $( this ).autocomplete({
+          source: function( request, response ) {
+              if(request.term.endsWith(" ")) {
+                  name = request.term.trim();
+              } else {
+                  name = request.term.trim()+"%";
+              }
+              $.ajax( {
+                  url: apiLocation+"variety/",
+                  type: "get",
+                  data: {"name": name},
+                  success: function( data ) {
+                      response( data.list );
+                  }
+              } );
+            },            
+            minLength: 2,
+            select: function( event, ui ) {
+                $(location).prop("href", "variety/"+encodeURIComponent(ui.item.uid));  
+            },
+            focus: function() {
+            // prevent value inserted on focus
+                return false;
+            },
+        }).autocomplete( "instance" )._renderItem = function( ul, item ) {
+            var content = $("<div/>");
+            var contentMain = $("<div/>");
+            contentMain.append($("<span class=\"fw-bold\"/>").text(item.name));
+            if(item.synonyms) {
+                contentMain.append($("<span class=\"mx-2\"/>").text("-"));
+                contentMain.append($("<span class=\"small fw-light\"/>").text(
+                      item.synonyms.replace(/,/g,", ")));
+            }
+            content.append(contentMain);
+            var contentSub = $("<div/>");
+            if(item.origin) {
+                contentSub.append($("<span class=\"\"/>").text(item.origin.country));
+            }
+            if(item.year) {
+                if(item.origin) {
+                    contentSub.append($("<span/>").text(", "));
+                }
+                contentSub.append($("<span class=\"\"/>").text(item.year.description));
+            }
+            if(item.parents && item.parents.length>0) {
+                if(item.origin||item.year) {
+                    contentSub.append($("<span/>").text(", "));
+                }
+                contentSub.append($("<span class=\"small fw-light\"/>").append(
+                    createParents(item.parents)));
+            }
+            content.append(contentSub);
+            return $( "<li>" ).append(content).appendTo( ul );
+        };
+    });
+    
+    if(operation=="variety") {                
     
         if(identifier) {   
             //get info
@@ -319,7 +377,7 @@ $( function() {
                           entryContentMain.append($("<span class=\"fw-bold\"/>").text(response.list[i].name));
                           if(response.list[i].synonyms) {
                               entryContentMain.append($("<span class=\"mx-2\"/>").text("-"));
-                              entryContentMain.append($("<span class=\"small text-secondary\"/>").text(
+                              entryContentMain.append($("<span class=\"small fw-light\"/>").text(
                                   response.list[i].synonyms.replace(/,/g,", ")));
                           }
                           entryContent.append(entryContentMain);
@@ -333,11 +391,11 @@ $( function() {
                               }
                               entryContentSub.append($("<span class=\"\"/>").text(response.list[i].year.description));
                           }
-                          if(response.list[i].parents) {
+                          if(response.list[i].parents && response.list[i].parents.length>0) {
                               if(response.list[i].origin||response.list[i].year) {
                                   entryContentSub.append($("<span/>").text(", "));
                               }
-                              entryContentSub.append($("<span class=\"small text-secondary\"/>").append(
+                              entryContentSub.append($("<span class=\"small fw-light\"/>").append(
                                   createParents(response.list[i].parents)));
                           }
                           entryContent.append(entryContentSub);
@@ -355,7 +413,7 @@ $( function() {
                         $("#block-info").append(listContainer);
                     }
                 } else {
-                    $("#block-info").append($("<div class=\"text-secondary\"/>").text("No results for '"+name+"'"));
+                    $("#block-info").append($("<div class=\"fw-light\"/>").text("No results for '"+name+"'"));
                 }    
               },
               error: function(xhr) {
@@ -363,6 +421,56 @@ $( function() {
               }
             });
         }
+    } else if(operation=="collection") {
+        
+        if(identifier) {   
+            //get info
+            $.ajax({
+              url: apiLocation+"collection/"+encodeURIComponent(identifier),
+              type: "get",
+              success: function(response) {
+                $("#block-info").removeClass("d-none").html("").show();  
+                if(!response.uid) {
+                    $(location).prop("href", "variety/");
+                } else {
+                    var cardContainer = $("<div class=\"card mt-3 mb-3\"/>");
+                    var cardHeader = $("<div class=\"card-header font-weight-bold bg-primary text-white\"/>");
+                    cardHeader.append($("<span class=\"me-1\"/>").text("Collection"));
+                    cardHeader.append($("<strong/>").text(response.name));
+                    cardContainer.append(cardHeader);                  
+                    var cardBody = $("<div class=\"card-body\"/>");
+                    var cardTable = $("<table class=\"table table-bordered table-hover\"/>");
+                    var cardTableBody = $("<tbody/>");
+                    cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Name"))
+                                                   .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                                                     .text(response.name)));
+                    cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Experiment"))
+                                                   .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                                                     .text(response.experiment)));
+                    cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Type"))
+                                                   .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                                                     .text(response.type)));
+                    cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Datasets"))
+                                                   .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                                                     .text(response.datasets)));
+                    cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Varieties"))
+                                                   .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                                                     .text(response.varieties)));
+                    cardTable.append(cardTableBody);
+                    cardBody.append(cardTable);                    
+                    cardContainer.append(cardBody); 
+                    $("#block-info").append(cardContainer);
+                }    
+              },
+              error: function(xhr) {
+                //Do Something to handle error
+                $(location).prop("href", "variety/");  
+              }
+            });    
+                
+        } else {
+        }
+        
     }
     
 
