@@ -123,8 +123,51 @@ $( function() {
         return container;
     }
     
+    function createVarietyListEntry(item) {
+        var entry = $("<a class=\"list-group-item d-flex justify-content-between align-items-start\"/>")
+        entry.attr("href", "variety/"+item.uid);
+        var entryContent = $("<div class=\"ms-2 me-auto\"/>");
+        entry.append(entryContent);
+        var entryContentMain = $("<div/>");
+        entryContentMain.append($("<span class=\"fw-bold\"/>").text(item.name));
+        if(item.synonyms) {
+          entryContentMain.append($("<span class=\"mx-2\"/>").text("-"));
+          entryContentMain.append($("<span class=\"small fw-light\"/>").text(
+              item.synonyms.replace(/,/g,", ")));
+        }
+        entryContent.append(entryContentMain);
+        var entryContentSub = $("<div/>");
+        if(item.origin) {
+          entryContentSub.append($("<span class=\"\"/>").text(item.origin.country));
+        }
+        if(item.year) {
+          if(item.origin) {
+              entryContentSub.append($("<span/>").text(", "));
+          }
+          entryContentSub.append($("<span class=\"\"/>").text(item.year.description));
+        }
+        if(item.parents && item.parents.length>0) {
+          if(item.origin||item.year) {
+              entryContentSub.append($("<span/>").text(", "));
+          }
+          entryContentSub.append($("<span class=\"small fw-light\"/>").append(
+              createParents(item.parents)));
+        }
+        entryContentSub.append($("<span class=\"\"/>").html("&nbsp;"));
+        entryContent.append(entryContentSub);
+        if(item.datasets.length>0) {
+          var entryLabel = $("<span class=\"badge bg-primary rounded-pill\"/>");
+          if(item.datasets.length==1) {
+              entryLabel.text("1 dataset");
+          } else {
+              entryLabel.text(item.datasets.length+" datasets");
+          }
+          entry.append(entryLabel);
+        }
+        return entry;
+    }
+    
     $(".autocomplete-uid").each(function() {
-        console.log("HOI");
         $( this ).autocomplete({
           source: function( request, response ) {
               if(request.term.endsWith(" ")) {
@@ -176,6 +219,7 @@ $( function() {
                 contentSub.append($("<span class=\"small fw-light\"/>").append(
                     createParents(item.parents)));
             }
+            contentSub.append($("<span class=\"\"/>").html("&nbsp;"));
             content.append(contentSub);
             return $( "<li>" ).append(content).appendTo( ul );
         };
@@ -369,46 +413,7 @@ $( function() {
                     } else {    
                         var listContainer = $("<div class=\"list-group\"/>");
                         for (var i = 0; i < response.list.length; i++) {
-                          var entry = $("<a class=\"list-group-item d-flex justify-content-between align-items-start\"/>")
-                          entry.attr("href", "variety/"+response.list[i].uid);
-                          var entryContent = $("<div class=\"ms-2 me-auto\"/>");
-                          entry.append(entryContent);
-                          var entryContentMain = $("<div/>");
-                          entryContentMain.append($("<span class=\"fw-bold\"/>").text(response.list[i].name));
-                          if(response.list[i].synonyms) {
-                              entryContentMain.append($("<span class=\"mx-2\"/>").text("-"));
-                              entryContentMain.append($("<span class=\"small fw-light\"/>").text(
-                                  response.list[i].synonyms.replace(/,/g,", ")));
-                          }
-                          entryContent.append(entryContentMain);
-                          var entryContentSub = $("<div/>");
-                          if(response.list[i].origin) {
-                              entryContentSub.append($("<span class=\"\"/>").text(response.list[i].origin.country));
-                          }
-                          if(response.list[i].year) {
-                              if(response.list[i].origin) {
-                                  entryContentSub.append($("<span/>").text(", "));
-                              }
-                              entryContentSub.append($("<span class=\"\"/>").text(response.list[i].year.description));
-                          }
-                          if(response.list[i].parents && response.list[i].parents.length>0) {
-                              if(response.list[i].origin||response.list[i].year) {
-                                  entryContentSub.append($("<span/>").text(", "));
-                              }
-                              entryContentSub.append($("<span class=\"small fw-light\"/>").append(
-                                  createParents(response.list[i].parents)));
-                          }
-                          entryContent.append(entryContentSub);
-                          if(response.list[i].datasets.length>0) {
-                              var entryLabel = $("<span class=\"badge bg-primary rounded-pill\"/>");
-                              if(response.list[i].datasets.length==1) {
-                                  entryLabel.text("1 dataset");
-                              } else {
-                                  entryLabel.text(response.list[i].datasets.length+" datasets");
-                              }
-                              entry.append(entryLabel);
-                          }
-                          listContainer.append(entry);                        
+                          listContainer.append(createVarietyListEntry(response.list[i]));                        
                         }
                         $("#block-info").append(listContainer);
                     }
@@ -466,7 +471,88 @@ $( function() {
                 //Do Something to handle error
                 $(location).prop("href", "variety/");  
               }
-            });    
+            }); 
+            //get list
+            var currentPage = 0;
+            var number = 10;
+            if(window.location.hash) {
+                var hashes = window.location.hash.substring(1).split(",");
+                for(var i=0;i<hashes.length;i++) {
+                    if(hashes[i].startsWith("page")) {
+                        currentPage = parseInt(hashes[i].substring(4));
+                    }
+                }
+            }
+            $("#block-list").each(function() {getCollectionList($(this), currentPage*number, number);});
+            function getCollectionList(container, start, number) {
+                var oContainer = container;
+                $.ajax({
+                    url: apiLocation+"variety/",
+                    type: "get",
+                    data: {"collection": identifier, "start": start, "number": number},
+                    success: function(response) {
+                        container.html("");
+                        //create navigation
+                        var startPage = 0
+                        var endPage = Math.floor(response.total/response.number);
+                        var currentPage = Math.floor(response.start/response.number);
+                        var navContainer = $("<nav class=\"d-flex flex-row\"/>");
+                        var posNav = $("<div class=\"d-flex flex-fill justify-content-start\"/>");
+                        posNav.append($("<div class=\"ml-1 my-2 text-info\"/>")
+                                      .text((response.start+1)+"-"
+                                            +(response.start+response.list.length)+" from "+response.total));
+                        navContainer.append(posNav);
+                        var ulNav = $("<ul class=\"pagination justify-content-end\"/>");
+                        navContainer.append(ulNav);
+                        var pageLink = $("<a class=\"page-link\" href=\"#\"/>").text("«");
+                        pageLink.data("page",0);
+                        ulNav.append($("<li class=\"page-item\"/>").append(pageLink));
+                        pageLink.click(function(event) {
+                            event.preventDefault();
+                            getCollectionList(oContainer,$(this).data("page")*number,number);
+                            window.location.hash = "page"+$(this).data("page");
+                            return false;
+                        });
+                        var leftSize = (currentPage>=endPage-1) ? (3-(endPage-currentPage)) : 1;
+                        var rightSize = (currentPage<=1) ? (3-currentPage) : 1;
+                        for(var i = startPage; i<=endPage; i++) {
+                            if((i>=currentPage-leftSize)&&(i<=currentPage+rightSize)) {
+                                pageLink = $("<a class=\"page-link\" href=\"#\"/>").text(i+1);
+                                pageLink.data("page",i);
+                                if(i==currentPage) {
+                                    pageLink.addClass("active");
+                                }
+                                pageLink.click(function(event) {
+                                    event.preventDefault();
+                                    getCollectionList(oContainer,$(this).data("page")*number,number);
+                                    window.location.hash = "page"+$(this).data("page");
+                                    return false;
+                                });
+                                ulNav.append($("<li class=\"page-item\"/>").append(pageLink));
+                            } else if((i==(currentPage-leftSize-1))||(i==(currentPage+rightSize+1))) {
+                                var pageLink = $("<a class=\"page-link\"/>").text("...");
+                                ulNav.append($("<li class=\"page-item\"/>").append(pageLink));
+                            }
+                        }
+                        pageLink = $("<a class=\"page-link\" href=\"#\"/>").text("»");
+                        pageLink.data("page",endPage);
+                        ulNav.append($("<li class=\"page-item\"/>").append(pageLink));
+                        pageLink.click(function(event) {
+                            event.preventDefault();
+                            getCollectionList(oContainer,endPage*number,number);
+                            window.location.hash = "page"+endPage;
+                            return false;
+                        });
+                        oContainer.append(navContainer);
+                        //create list
+                        var listContainer = $("<div class=\"list-group\"/>");
+                        for (var i = 0; i < response.list.length; i++) {
+                            listContainer.append(createVarietyListEntry(response.list[i]));                         
+                        }
+                        oContainer.append(listContainer);
+                    }
+                });
+            }
                 
         } else {
         }
