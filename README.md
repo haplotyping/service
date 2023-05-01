@@ -6,4 +6,4 @@
 
 This will make a [basic site](http://localhost:5000/) and the [API](http://localhost:5000/api/) available on the configured port.
 
-This service relies on a SQLITE database, marker databases and k-mer databases as can be created with provided [scripts](/haplotyping/scripts).
+This service relies on a SQLITE database, marker databases and k-mer databases as can be created with provided [scripts](https://github.com/haplotyping/scripts).
