@@ -1101,10 +1101,10 @@ $( function() {
                   cardResultButton));
                 cardResult.append(cardResultHeader);                  
                 var cardResultBody = $("<div class=\"card-body overflow-scroll\"/>");
-                var cardResultTable = $("<table class=\"table table-bordered table-hover\"/>");
+                var cardResultTable = $("<table class=\"table table-sm table-bordered table-hover\"/>");
                 var cardResultTableHead = $("<thead/>");
                 cardResultTableHeadRow = $("<tr/>").append($("<th scope=\"col\"/>").text("k-mer"));
-                cardResultTableBodyRowYear = $("<tr/>").append($("<th scope=\"col\"/>")).hide();
+                cardResultTableBodyRowYear = $("<tr/>").append($("<th scope=\"col\"/ class=\"text-center\">")).hide();
                 for (var j=0; j<selectedDatasets.length; j++) {
                     cardResultTableHeadRow.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].variety.name)
