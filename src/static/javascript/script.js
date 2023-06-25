@@ -16,9 +16,6 @@ $( function() {
     
     function swapSelectedDatasets(data,variety) {
         var selectedDatasets = JSON.parse(sessionStorage.getItem("apiInterfaceSelectedDatasets"));
-        console.log(selectedDatasets);
-        console.log(data);
-        console.log(variety);
         var newSelectedDatasets = [];
         var found = false;
         if("uid" in data && "type" in data && (data["type"]=="kmer" || data["type"]=="split")) {
@@ -707,14 +704,14 @@ $( function() {
                             datasetSelectionButton.data("dataset",response.datasets[i]);
                             datasetSelectionButton.click(function(event) {
                                 event.preventDefault();
-                                var data = $(this).data("dataset");
-                                console.log(data);
+                                var oThis = $(this);
+                                var data = oThis.data("dataset");
                                 if(!swapSelectedDatasets(data,response)) {
-                                    datasetSelectionButton.removeClass("fa-trash");
-                                    datasetSelectionButton.addClass("fa-plus");
+                                    oThis.removeClass("fa-trash");
+                                    oThis.addClass("fa-plus");
                                 } else {
-                                    datasetSelectionButton.removeClass("fa-plus");
-                                    datasetSelectionButton.addClass("fa-trash");
+                                    oThis.removeClass("fa-plus");
+                                    oThis.addClass("fa-trash");
                                 }
                                 return false;
                             });
@@ -1038,10 +1035,13 @@ $( function() {
                 ))
             
             var datasetDeleteButton = $("<button class=\"btn btn-sm fa-solid fa-trash\"/>");
+            datasetDeleteButton.data("dataset",dataset);
             datasetDeleteButton.click(function(event) {
-                event.preventDefault();                
-                deleteSelectedDatasets(dataset.uid);
-                datasetRow.remove();
+                event.preventDefault();        
+                var oThis = $(this);
+                var data = oThis.data("dataset");
+                deleteSelectedDatasets(data.uid);
+                oThis.closest("tr").remove();
                 return false;
             });
             datasetRow.append($("<td class=\"col-1 ms-auto\"/>").append(datasetDeleteButton));
