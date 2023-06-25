@@ -1084,9 +1084,6 @@ $( function() {
                 var oThis = $(this);
                 oThis.find("button").attr("disabled",true);
                 var selectedDatasets = getSelectedDatasets();   
-                for(var i=0; i<5; i++) {
-                    selectedDatasets =selectedDatasets.concat(selectedDatasets);
-                }    
                 var sequence = $.trim($(this).find("textarea").val());
                 //output
                 var cardResult = $("<div class=\"card mt-3 mb-3\"/>");
