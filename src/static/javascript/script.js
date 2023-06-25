@@ -1194,7 +1194,8 @@ $( function() {
                                             extend: "excel",
                                             text: "EXCEL",
                                             messageTop: false,
-                                            title: false,
+                                            messageBottom: false,
+                                            title: null,
                                             sheetName: "frequencies",
                                             filename: "kmer_frequencies_"+new Date().toISOString().split(".")[0]
                                         }
