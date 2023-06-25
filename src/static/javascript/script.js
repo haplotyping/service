@@ -1153,15 +1153,17 @@ $( function() {
                               //fill correct column 
                               if(Object.keys(subResponse.kmers).length>0) {
                                   var subsetValues = []
-                                  for(var value in Object.values(subResponse.kmers)) {
-                                      if(value>0) {
-                                          subsetValues.push(value);
+                                  var allSubsetValues = Object.values(subResponse.kmers);
+                                  for(var i in allSubsetValues) {
+                                      if(allSubsetValues[i]>0) {
+                                          subsetValues.push(allSubsetValues[i]);
                                       }    
                                   }
-                                  subsetValues.sort();
+                                  subsetValues.sort(function(a, b) {
+                                      return a - b;
+                                  });
                                   var maxValue = 3*subsetValues[Math.floor(subsetValues.length/2)];
                                   var minValue = 1;
-                                  console.log(maxValue);
                                   for(var rkmer in subResponse.kmers) {
                                       var frequency = subResponse.kmers[rkmer];
                                       var rgb = 255 - Math.max(0,Math.min(255,Math.ceil(255*(frequency-minValue)/maxValue)));
