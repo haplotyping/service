@@ -16,6 +16,9 @@ $( function() {
     
     function swapSelectedDatasets(data,variety) {
         var selectedDatasets = JSON.parse(sessionStorage.getItem("apiInterfaceSelectedDatasets"));
+        console.log(selectedDatasets);
+        console.log(data);
+        console.log(variety);
         var newSelectedDatasets = [];
         var found = false;
         if("uid" in data && "type" in data && (data["type"]=="kmer" || data["type"]=="split")) {
@@ -701,9 +704,11 @@ $( function() {
                             } else {
                                 datasetSelectionButton.addClass("fa-plus");
                             }
-                            var data = response.datasets[i];
+                            datasetSelectionButton.data("dataset",response.datasets[i]);
                             datasetSelectionButton.click(function(event) {
                                 event.preventDefault();
+                                var data = $(this).data("dataset");
+                                console.log(data);
                                 if(!swapSelectedDatasets(data,response)) {
                                     datasetSelectionButton.removeClass("fa-trash");
                                     datasetSelectionButton.addClass("fa-plus");
