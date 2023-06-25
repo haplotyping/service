@@ -1029,7 +1029,7 @@ $( function() {
                 ))
             datasetRow.append($("<td/>").text(dataset.variety.year.description));
             datasetRow.append($("<td/>").text(dataset.variety.origin.country));
-            datasetRow.append($("<td/>").text(dataset.type));
+            datasetRow.append($("<td/>").text(dataset.collection.type));
             datasetRow.append($("<td scope=\"row\"/>").append(
                 $("<a class=\"text-decoration-none\"/>")
                                      .text(dataset.collection.name)
@@ -1103,19 +1103,36 @@ $( function() {
                 var cardResultBody = $("<div class=\"card-body overflow-scroll\"/>");
                 var cardResultTable = $("<table class=\"table table-sm table-bordered table-hover\"/>");
                 var cardResultTableHead = $("<thead/>");
-                cardResultTableHeadRow = $("<tr/>").append($("<th scope=\"col\"/>").text("k-mer"));
-                cardResultTableBodyRowYear = $("<tr/>").append($("<th scope=\"col\"/ class=\"text-center\">")).hide();
+                cardResultTableHeadRow = $("<tr/>")
+                    .append($("<th scope=\"col\" />").text("k-mer"));
+                cardResultTableBodyRowYear = $("<tr/>")
+                    .append($("<th scope=\"col\" />").text("Year")).hide();
+                cardResultTableBodyRowOrigin = $("<tr/>")
+                    .append($("<th scope=\"col\" />").text("Origin")).hide();
+                cardResultTableBodyRowType = $("<tr/>")
+                    .append($("<th scope=\"col\" />").text("Type")).hide();
+                cardResultTableBodyRowCollection = $("<tr/>")
+                    .append($("<th scope=\"col\" />").text("Collection")).hide();
                 for (var j=0; j<selectedDatasets.length; j++) {
                     cardResultTableHeadRow.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].variety.name)
                                   .css("text-orientation","mixed").css("writing-mode","vertical-rl"));
                     cardResultTableBodyRowYear.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].variety.year.description));
+                    cardResultTableBodyRowOrigin.append($("<th scope=\"col\"/>")
+                                  .text(selectedDatasets[j].variety.origin.country));
+                    cardResultTableBodyRowType.append($("<th scope=\"col\"/>")
+                                  .text(selectedDatasets[j].collection.type));
+                    cardResultTableBodyRowCollection.append($("<th scope=\"col\"/>")
+                                  .text(selectedDatasets[j].collection.name));
                 }
                 cardResultTableHead.append(cardResultTableHeadRow)
                 cardResultTable.append(cardResultTableHead);
                 var cardResultTableBody = $("<tbody/>");
                 cardResultTableBody.append(cardResultTableBodyRowYear)
+                cardResultTableBody.append(cardResultTableBodyRowOrigin)
+                cardResultTableBody.append(cardResultTableBodyRowType)
+                cardResultTableBody.append(cardResultTableBodyRowCollection)
                 cardResultTable.append(cardResultTableBody);                 
                 cardResultBody.append($("<div/>").append(cardResultTable));
                 cardResult.append(cardResultBody); 
@@ -1179,7 +1196,9 @@ $( function() {
                               }    
                               if(datasetCounter==selectedDatasets.length-1) {
                                  cardResultTable.DataTable( {
-                                    colReorder: true,
+                                    colReorder: {
+                                        fixedColumnsLeft: 1
+                                    },
                                     paging: false,
                                     searching: false,
                                     ordering: false,
