@@ -1107,7 +1107,7 @@ $( function() {
                 cardResultTableBodyRowYear = $("<tr/>").append($("<th scope=\"col\"/>")).hide();
                 for (var j=0; j<selectedDatasets.length; j++) {
                     cardResultTableHeadRow.append($("<th scope=\"col\"/>")
-                                  .text(selectedDatasets[j].variety.name+" "+j)
+                                  .text(selectedDatasets[j].variety.name)
                                   .css("text-orientation","mixed").css("writing-mode","vertical-rl"));
                     cardResultTableBodyRowYear.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].variety.year.description));
@@ -1194,6 +1194,7 @@ $( function() {
                                             extend: "excel",
                                             text: "EXCEL",
                                             messageTop: false,
+                                            title: false,
                                             sheetName: "frequencies",
                                             filename: "kmer_frequencies_"+new Date().toISOString().split(".")[0]
                                         }
