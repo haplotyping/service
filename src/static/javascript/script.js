@@ -1161,6 +1161,7 @@ $( function() {
                                   subsetValues.sort();
                                   var maxValue = 3*subsetValues[Math.floor(subsetValues.length/2)];
                                   var minValue = 1;
+                                  console.log(maxValue);
                                   for(var rkmer in subResponse.kmers) {
                                       var frequency = subResponse.kmers[rkmer];
                                       var rgb = 255 - Math.max(0,Math.min(255,Math.ceil(255*(frequency-minValue)/maxValue)));
