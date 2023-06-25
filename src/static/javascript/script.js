@@ -694,27 +694,29 @@ $( function() {
                         for (var i=0;i<response.datasets.length;i++) {
                             if(response.datasets[i].type=="kmer" || response.datasets[i].type=="split") {
                                 kmerDatasets.push(response.datasets[i]);
-                            }
-                            var datasetSelectionButton = $("<button class=\"btn btn-sm fa-solid\"/>");
-                            if(checkSelectedDatasets(response.datasets[i].uid)) {
-                                datasetSelectionButton.addClass("fa-trash");
-                            } else {
-                                datasetSelectionButton.addClass("fa-plus");
-                            }
-                            datasetSelectionButton.data("dataset",response.datasets[i]);
-                            datasetSelectionButton.click(function(event) {
-                                event.preventDefault();
-                                var oThis = $(this);
-                                var data = oThis.data("dataset");
-                                if(!swapSelectedDatasets(data,response)) {
-                                    oThis.removeClass("fa-trash");
-                                    oThis.addClass("fa-plus");
+                                var datasetSelectionButton = $("<button class=\"btn btn-sm fa-solid\"/>");
+                                if(checkSelectedDatasets(response.datasets[i].uid)) {
+                                    datasetSelectionButton.addClass("fa-trash");
                                 } else {
-                                    oThis.removeClass("fa-plus");
-                                    oThis.addClass("fa-trash");
+                                    datasetSelectionButton.addClass("fa-plus");
                                 }
-                                return false;
-                            });
+                                datasetSelectionButton.data("dataset",response.datasets[i]);
+                                datasetSelectionButton.click(function(event) {
+                                    event.preventDefault();
+                                    var oThis = $(this);
+                                    var data = oThis.data("dataset");
+                                    if(!swapSelectedDatasets(data,response)) {
+                                        oThis.removeClass("fa-trash");
+                                        oThis.addClass("fa-plus");
+                                    } else {
+                                        oThis.removeClass("fa-plus");
+                                        oThis.addClass("fa-trash");
+                                    }
+                                    return false;
+                                });
+                            } else {
+                                var datasetSelectionButton = $("<span/>");                                
+                            }
                             datasetsTbody.append($("<tr/>").append($("<td/>").text(response.datasets[i].type))
                                                  .append($("<td/>").append(
                                                     $("<a class=\"text-decoration-none\"/>")
