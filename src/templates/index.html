@@ -7,15 +7,17 @@
         <link rel="stylesheet" href="static/node_modules/jquery-ui-dist/jquery-ui.min.css">
         <link rel="stylesheet" href="static/node_modules/bootstrap/dist/css/bootstrap.min.css" />
         <link rel="stylesheet" href="static/node_modules/@fortawesome/fontawesome-free/css/all.min.css" />
+        <link rel="stylesheet" href="static/node_modules/datatables.net-bs/css/dataTables.bootstrap.min.css" />
         <link rel="stylesheet" media="all" href="static/css/style.css" />
         <link rel="shortcut icon" href="static/favicon.ico" type="image/x-icon" />
     </head>
-    <body id="appeltaart" class="background bg-white" data-api="api/" data-root="{{ rootLocation }}" data-operation="{{ operation }}" data-identifier="{{ identifier }}">
+    <body class="background bg-white" data-api="api/" data-root="{{ rootLocation }}" data-operation="{{ operation }}" data-identifier="{{ identifier }}">
         <!-- START HEADER -->
         <header>
             <div class="container p-0">
-                <nav class="navbar navbar-expand-sm navbar-light px-3">
+                <nav class="navbar navbar-expand-sm navbar-light px-3 justify-content-between">
                     <a class="navbar-brand" href="./"><strong class="text-white">User Interface API</strong></a>
+                    <div id="basket" class="navbar-text text-white"></div>
                 </nav>
             </div>  
         </header>  
@@ -25,6 +27,8 @@
             {% include "modules/variety.html" %}
             {% elif operation == "collection" %}
             {% include "modules/collection.html" %}
+            {% elif operation == "datasets" %}
+            {% include "modules/datasets.html" %}
             {% else %}
             {% include "modules/home.html" %}
             {% endif %}
@@ -41,6 +45,13 @@
         <script type="text/javascript" src="static/node_modules/@popperjs/core/dist/umd/popper.min.js"></script>
         <script type="text/javascript" src="static/node_modules/bootstrap/dist/js/bootstrap.min.js"></script>
         <script type="text/javascript" src="static/node_modules/d3/dist/d3.min.js"></script>
+        <script type="text/javascript" src="static/node_modules/datatables.net/js/jquery.dataTables.min.js"></script>
+        <script type="module" src="static/node_modules/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+        <script type="module" src="static/node_modules/datatables.net-colreorder/js/dataTables.colReorder.min.js"></script>
+        <script type="module" src="static/node_modules/datatables.net-buttons/js/dataTables.buttons.min.js"></script>
+        <script type="module" src="static/node_modules/datatables.net-buttons/js/buttons.html5.min.js"></script>
+        <script type="module" src="static/node_modules/datatables.net-buttons/js/buttons.print.min.js"></script>
+        <script type="module" src="static/node_modules/jszip/dist/jszip.min.js"></script>
         <script type="text/javascript" src="static/javascript/script.js"></script>
     </body>
 </html>

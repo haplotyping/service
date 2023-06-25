@@ -5,9 +5,100 @@ $( function() {
     var rootLocation = $("body").data("root");
     var operation = $("body").data("operation");    
     var identifier = $("body").data("identifier");    
-    var searchParams = new URLSearchParams(window.location.search)
+    var searchParams = new URLSearchParams(window.location.search)    
+    var tooltipContainer = $("main");
     
-    function visualizeKmerDensity(container,sequence,response,title,collection) {
+    //use session storage    
+    if(!("apiInterfaceSelectedDatasets" in sessionStorage)) {
+        var selectedDatasets = [];
+        sessionStorage.setItem("apiInterfaceSelectedDatasets", JSON.stringify(selectedDatasets));
+    }    
+    
+    function swapSelectedDatasets(data,variety) {
+        var selectedDatasets = JSON.parse(sessionStorage.getItem("apiInterfaceSelectedDatasets"));
+        var newSelectedDatasets = [];
+        var found = false;
+        if("uid" in data && "type" in data && (data["type"]=="kmer" || data["type"]=="split")) {
+            for(entry in selectedDatasets) {
+                if(selectedDatasets[entry] instanceof Object && !Array.isArray(selectedDatasets[entry]) 
+                   && "uid" in selectedDatasets[entry]) {
+                    if(!(selectedDatasets[entry]["uid"]==data["uid"])) {
+                        newSelectedDatasets.push(selectedDatasets[entry]);
+                    } else {
+                        found = true;
+                    }
+                }
+            }
+            if(!found) {
+                var newEntry = {"uid": data.uid, "type": data.type,
+                                "collection": data.collection, 
+                                "variety": variety};                
+                newSelectedDatasets.push(newEntry);
+                sessionStorage.setItem("apiInterfaceSelectedDatasets", JSON.stringify(newSelectedDatasets));
+                setBasket();
+                return true;
+            } else {
+                sessionStorage.setItem("apiInterfaceSelectedDatasets", JSON.stringify(newSelectedDatasets));
+                setBasket();
+                return false;
+            }
+        } else {
+            setBasket();
+            return false;
+        }
+    }
+    
+    function deleteSelectedDatasets(uid) {
+        var selectedDatasets = JSON.parse(sessionStorage.getItem("apiInterfaceSelectedDatasets"));
+        var newSelectedDatasets = [];
+        for(entry in selectedDatasets) {
+            if(selectedDatasets[entry] instanceof Object && !Array.isArray(selectedDatasets[entry]) 
+               && "uid" in selectedDatasets[entry]) {
+                if(!(selectedDatasets[entry]["uid"]==uid)) {
+                    newSelectedDatasets.push(selectedDatasets[entry]);
+                } 
+            }
+        }
+        sessionStorage.setItem("apiInterfaceSelectedDatasets", JSON.stringify(newSelectedDatasets));
+        setBasket();
+    }
+    
+    function checkSelectedDatasets(uid) {
+        var selectedDatasets = JSON.parse(sessionStorage.getItem("apiInterfaceSelectedDatasets"));
+        for(entry in selectedDatasets) {
+            if(selectedDatasets[entry] instanceof Object && !Array.isArray(selectedDatasets[entry]) 
+               && "uid" in selectedDatasets[entry]) {
+                if(selectedDatasets[entry]["uid"]==uid) {                                        
+                    return true;
+                } 
+            } 
+        }
+        return false;
+    }
+    
+    function getSelectedDatasets() {
+        var selectedDatasets = JSON.parse(sessionStorage.getItem("apiInterfaceSelectedDatasets"));
+        return selectedDatasets;
+    }
+    
+    function setBasket() {
+        var selectedDatasets = JSON.parse(sessionStorage.getItem("apiInterfaceSelectedDatasets"));
+        $("div#basket").html("").css("visibility", "hidden");      
+        var basketButton = $("<button class=\"btn btn-sm fa-solid fa-basket-shopping text-white\"></button>");        
+        $("div#basket").append($("<span role=\"button\"/>").text(
+            selectedDatasets.length+" selected dataset(s)").append(basketButton)
+           .click(function(event) {
+              event.preventDefault();
+              $(location).prop("href", "datasets/");
+              return false;
+           }));
+        if(selectedDatasets.length>0) {
+            $("div#basket").css("visibility", "visible");
+        }
+    }
+        
+    
+    function visualizeKmerDensity(container,datasetUid,sequence,response,title,collection) {
         var k = response.info.kmer_length;
         var n = sequence.length - k + 1;
         if(n<=0) {
@@ -22,15 +113,19 @@ $( function() {
                                .append($("<span class=\"small\"/>").text(", "+collection))
                                .append($("<span class=\"small\"/>")
                                        .text(", "+(sequence.length-k+1-response.stats.positive)+" missing k-mers")));        
-            bins = []
+            var bins = []
+            var sequenceKmers = []
             for (var i = 0; i < n; i++) {
                 var kmer = sequence.substring(i,i+k);
+                sequenceKmers.push(kmer);
                 if(kmer in response.kmers) {
                     bins.push({"kmer": kmer, "position": i, "frequency": response.kmers[kmer]});
                 } else {
                     bins.push({"kmer": kmer, "position": i, "frequency": 0});
                 }
             }
+            var toolTip = $("<div/>").addClass("tooltip").text("").css("opacity",0).css("position","absolute");
+            tooltipContainer.append(toolTip)
             var containerWidth = container.width(),
                 containerHeight = 250,
                 marginBottom = 50,
@@ -42,6 +137,26 @@ $( function() {
                 .attr("height", containerHeight)
                 .append("g")
                 .attr("transform", "translate(0,0)");
+                
+            var kmerResult = $("<div class=\"card mt-3 mb-3\"/>");
+            var kmerResultHeader = $("<div "+
+                "class=\"card-header font-weight-bold bg-secundary text-dark py-0\"/>");
+            var kmerResultButton = $("<button class=\"btn btn-sm fa-solid fa-xmark\"></button>");
+            kmerResultButton.click(function(event) {
+                svg.selectAll("rect").classed("selected", false);
+                event.preventDefault();
+                kmerResultHeaderText.text("");
+                kmerResultBody.text("");
+                kmerResult.hide();
+                return false;
+            });
+            kmerResultHeaderText = $("<div class=\"float-start\"/>").text("");
+            kmerResultHeader.append(kmerResultHeaderText);
+            kmerResultHeader.append($("<div class=\"float-end\"></div>").append(kmerResultButton));
+            kmerResult.append(kmerResultHeader);                  
+            var kmerResultBody = $("<div class=\"card-body\"/>");
+            kmerResult.append(kmerResultBody).hide();   
+            container.append(kmerResult);
 
             var x = d3.scaleLinear()
                   .domain([0,sequence.length-k+1])     
@@ -61,17 +176,45 @@ $( function() {
             svg.append("g")
                   .attr("transform", "translate(" + marginLeft + ",0)")
                   .call(d3.axisLeft(y).tickFormat(d3.format("d")));
-
-            svg.selectAll(".rect1")
+                  
+                  
+            svg.append("g").selectAll(".rect1")
                   .data(bins)
                   .enter()
                   .append("rect")
                     .attr("x", marginLeft)
                     .attr("transform", function(d) { return "translate(" + x(d.position) + ", "+y(d.frequency)+" )"; })
                     .attr("width", function(d) { return x(1); })
-                    .attr("height", function(d) { return y(0)-y(d.frequency); });
+                    .attr("height", function(d) { return y(0)-y(d.frequency); })
+                    .attr("class", "found")
+                    .attr("data-kmer", function(d) { return d.kmer; })
+                    .attr("data-frequency", function(d) { return d.frequency; })
+                    .on("mouseover", function(e) {                        
+                        d3.select(this).classed("hover", true);
+                        toolTip.css("opacity",1);
+                        toolTip.text(e.target.getAttribute("data-kmer")+": "+e.target.getAttribute("data-frequency")+"x");
+                        e.stopPropagation();
+                      })
+                    .on("mouseout", function(e) {
+                         d3.select(this).classed("hover", false);
+                         toolTip.css("opacity",0);
+                         toolTip.text("");
+                         e.stopPropagation();
+                    }).on("mousemove", function(e) { 
+                        let coor = d3.pointer(e,tooltipContainer[0]);
+                        toolTip
+                            .css("left", coor[0] + "px")
+                            .css("top", coor[1] + "px"); 
+                        e.stopPropagation();                     
+                    }).on("click", function(e) { 
+                        var kmer = e.target.getAttribute("data-kmer");
+                        var frequency = e.target.getAttribute("data-frequency");
+                        displayKmerInfo(datasetUid,kmer,frequency,sequenceKmers,svg,kmerResult,kmerResultBody,
+                            kmerResultHeaderText,toolTip,marginBottom);                                        
+                    });
+                    
 
-            svg.selectAll(".rect2")
+            svg.append("g").selectAll(".rect2")
                   .data(bins)
                   .enter()
                   .append("rect")
@@ -80,8 +223,269 @@ $( function() {
                                 (containerHeight-(marginBottom/2))+" )"; })
                     .attr("width", function(d) { return x(1); })
                     .attr("height", function(d) { if(d.frequency==0) {return 10;} else {return 0;} })
-                    .attr("fill", "red");
+                    .attr("class", "missing")
+                    .attr("data-kmer", function(d) { return d.kmer; })
+                    .on("mouseover", function(e) {
+                        d3.select(this).classed("hover", true);
+                        toolTip.css("opacity",1);
+                        toolTip.text(e.target.getAttribute("data-kmer"));
+                        e.stopPropagation();
+                      })
+                    .on("mouseout", function(e) {
+                         d3.select(this).classed("hover", false);
+                         toolTip.css("opacity",0);
+                         toolTip.text("");
+                         e.stopPropagation();
+                    }).on("mousemove", function(e) { 
+                        let coor = d3.pointer(e,tooltipContainer[0]);
+                        toolTip
+                            .css("left", coor[0] + "px")
+                            .css("top", coor[1] + "px"); 
+                        e.stopPropagation();                         
+                    }).on("click", function(e) { 
+                        var kmer = e.target.getAttribute("data-kmer");
+                        displayKmerInfo(datasetUid,kmer,0,sequenceKmers,svg,kmerResult,kmerResultBody,
+                            kmerResultHeaderText,toolTip,marginBottom);                     
+                    });
         }
+    }
+    
+    function displayKmerInfo(datasetUid,kmer,frequency,sequenceKmers,svg,kmerResult,kmerResultBody,
+                              kmerResultHeaderText,toolTip,marginBottom) {
+        svg.selectAll("rect").classed("selected", false);
+        svg.selectAll("rect")
+              .filter(function() {
+                return d3.select(this).attr("data-kmer") == kmer;
+              }).classed("selected", true); 
+        kmerResultHeaderText.text(kmer+": "+frequency+"x");
+        kmerResultBody.text("");
+        kmerResult.show();
+        
+        function drawKmers(data, x, top, step, type = "main", lineX=0, previousYValues) { 
+        
+            var maxWidth = 0;
+            var yValues = {};
+            if(type=="left"|type=="right") {
+                data.sort(function(a, b){return a.kmer.split("").reverse().join("")>b.kmer.split("").reverse().join("")}); 
+            } else {
+                data.sort(function(a, b){return a.kmer>b.kmer});    
+            }
+            
+            //don't use empty data to estimate size
+            if(data.length==0) {
+                var testData = [{"kmer": kmer, "frequency": 0}];
+            } else {
+                var testData = data;
+            }            
+            var temporaryG = graphsvg.append("g")
+                .style("font", "14px sans-serif")
+                .style("fill", "#000")
+                .selectAll("text")
+                .data(testData)
+                .join("text")
+                .each(function(d) { d.y = top;
+                                    yValues[d.kmer] = d.y;
+                                    top += step;})
+                .attr("x", d => x)
+                .attr("y", d => d.y)
+                .attr("class", "temporary")
+                .text(d => (type == "left") ? d.kmer[0] : 
+                           ((type == "right") ? d.kmer[d.kmer.length - 1] : d.kmer) );
+                                        
+            linkData = [];
+            
+            graphsvg.selectAll("text.temporary")
+                .join(testData)
+                   .each(function(d) { 
+                       d.bbox = this.getBBox(); 
+                       maxWidth = Math.max(maxWidth,d.bbox.width);
+                       for (nkmer in previousYValues) {
+                           let d1 = Object.assign({}, d);
+                           if(d.frequency==0) {
+                               //don't do anything
+                           } else if(type=="right") {
+                               if(nkmer.slice(1)==d1.kmer.slice(0,-1)) {
+                                   d1.y2=previousYValues[nkmer];
+                                   linkData.push(d1);
+                               }
+                           } else if(type=="left") {
+                               if(nkmer.slice(0,-1)==d1.kmer.slice(1)) {
+                                   d1.y2=previousYValues[nkmer];
+                                   linkData.push(d1);
+                               }
+                           }
+                       }
+                   })
+                   .remove();  
+            if (lineX>0) {
+                if (type=="left"||type=="right") {
+                    graphsvg.append("g")
+                        .selectAll("line")
+                        .data(linkData)
+                        .join("line")
+                        .attr("stroke","red")
+                        .attr("stroke-width","2")
+                        .attr("x1", d => x)
+                        .attr("y1", d => d.y)
+                        .attr("x2", d => lineX)
+                        .attr("y2", d => d.y2);
+                } 
+            }                                  
+            
+            graphsvg.append("g")
+                .style("font", "14px sans-serif")
+                .style("fill", "#000")
+                .selectAll("text")
+                .data(data)
+                .join("text")
+                .attr("x", d => (type == "left") ? (x - d.bbox.width - 10) : 
+                      ((type == "right") ? x + 10 : (x-(d.bbox.width/2)) ))
+                .attr("y", d => d.y)
+                .text(d => (type == "left") ? d.kmer[0] : 
+                           ((type == "right") ? d.kmer[d.kmer.length - 1] : d.kmer) );
+               
+               graphsvg.append("g")
+                .selectAll("rect")
+                .data(data)
+                .join("rect")
+                .attr("x", d => (type == "left") ? (x - d.bbox.width - 20) : 
+                      ((type == "right") ? x : (x-(d.bbox.width/2)-10) ))
+                .attr("y", d => d.y - 20 + (20-d.bbox.height))
+                .attr("width", d => d.bbox.width + 20)
+                .attr("height", 20)
+                .attr("data-kmer", function(d) {return d.kmer; })
+                .attr("data-frequency", function(d) { return d.frequency; })
+                .attr("class", d => (kmer==d.kmer) ? "kmer selected" : 
+                              (sequenceKmers.includes(d.kmer) ? "kmer sequence" : "kmer"))
+                  .style("opacity", "0.5")
+                  .on("mouseover", function(e) {
+                    d3.select(this).classed("hover", true);
+                    toolTip.css("opacity",1);
+                    toolTip.text(e.target.getAttribute("data-kmer")+": "+e.target.getAttribute("data-frequency")+"x");
+                  })
+                .on("mouseout", function() {
+                     d3.select(this).classed("hover", false);
+                     toolTip.css("opacity",0);
+                     toolTip.text("");
+                }).on("mousemove", function(e) { 
+                    let coor = d3.pointer(e,tooltipContainer[0]);
+                    toolTip
+                        .css("left", (coor[0]) + "px")
+                        .css("top", (coor[1]) + "px");      
+                    e.stopPropagation();                    
+                })
+                .on("click", function(e) { 
+                    var dkmer = e.target.getAttribute("data-kmer");
+                    var dfrequency = e.target.getAttribute("data-frequency");
+                    displayKmerInfo(datasetUid,dkmer,dfrequency,sequenceKmers,svg,kmerResult,kmerResultBody,
+                                    kmerResultHeaderText,toolTip,marginBottom);                                        
+            });                        
+            
+                        
+            return [maxWidth+20, yValues];
+        }
+        
+        
+        
+        
+        var graphsvg = d3.select(kmerResultBody.get(0)).append("svg");
+        var kmerOffset = 20, kmerHeight = 30, kmerDistance = 30;        
+        $.ajax({
+          url: apiLocation+"kmer/"+encodeURIComponent(datasetUid),
+          type: "post",
+          dataType: "json",
+          contentType: "application/json",  
+          data: JSON.stringify({"kmers": [kmer], "mismatches": 1}),
+          success: function(responseMainKmer) {
+              var kmerData = [];
+              for (rkmer in responseMainKmer.kmers) {
+                  kmerData.push({"kmer": rkmer, "frequency": responseMainKmer.kmers[rkmer]});
+              }
+              //create container
+              var maxNumber = Math.max(16,kmerData.length);
+              var containerWidth = kmerResultBody.width(),
+                  containerHeight = maxNumber * kmerHeight;
+              graphsvg.attr("width", containerWidth)
+                      .attr("height", containerHeight)
+                      .append("g")
+                      .attr("transform", "translate(0,0)");                      
+
+              var kmerWidth, kmerYvalues;
+              [kmerWidth,kmerYvalues] = drawKmers(kmerData, (containerWidth/2), kmerOffset, kmerHeight);
+              
+              left1Kmers = ["A"+kmer.slice(0,-1),"C"+kmer.slice(0,-1),"G"+kmer.slice(0,-1),"T"+kmer.slice(0,-1)];
+              left2Kmers = ["AA"+kmer.slice(0,-2),"AC"+kmer.slice(0,-2),"AG"+kmer.slice(0,-2),"AT"+kmer.slice(0,-2),
+                            "CA"+kmer.slice(0,-2),"CC"+kmer.slice(0,-2),"CG"+kmer.slice(0,-2),"CT"+kmer.slice(0,-2),
+                            "GA"+kmer.slice(0,-2),"GC"+kmer.slice(0,-2),"GG"+kmer.slice(0,-2),"GT"+kmer.slice(0,-2),
+                            "TA"+kmer.slice(0,-2),"TC"+kmer.slice(0,-2),"TG"+kmer.slice(0,-2),"TT"+kmer.slice(0,-2)];
+              right1Kmers = [kmer.slice(1)+"A",kmer.slice(1)+"C",kmer.slice(1)+"G",kmer.slice(1)+"T"];
+              right2Kmers = [kmer.slice(2)+"AA",kmer.slice(2)+"AC",kmer.slice(2)+"AG",kmer.slice(2)+"AT",
+                             kmer.slice(2)+"CA",kmer.slice(2)+"CC",kmer.slice(2)+"CG",kmer.slice(2)+"CT",
+                             kmer.slice(2)+"GA",kmer.slice(2)+"GC",kmer.slice(2)+"GG",kmer.slice(2)+"GT",
+                             kmer.slice(2)+"TA",kmer.slice(2)+"TC",kmer.slice(2)+"TG",kmer.slice(2)+"TT"];
+              
+              neighbouringKmers = left1Kmers.concat(left2Kmers).concat(right1Kmers).concat(right2Kmers);
+              $.ajax({
+                  url: apiLocation+"kmer/"+encodeURIComponent(datasetUid),
+                  type: "post",
+                  dataType: "json",
+                  contentType: "application/json",  
+                  data: JSON.stringify({"kmers": neighbouringKmers, "mismatches": 0}),
+                  success: function(responseNeighbouringKmers) {
+                      var lw1,lk1Yvalues,rw1,rk1Yvalues;
+                      var nl1KmerData = [],nl2KmerData = [],nr1KmerData = [],nr2KmerData = [];
+                      for (rkmer in responseNeighbouringKmers.kmers) {
+                          if(left1Kmers.includes(rkmer)) {
+                              if (responseNeighbouringKmers.kmers[rkmer]>0) {
+                                  nl1KmerData.push({"kmer": rkmer, 
+                                                   "frequency": responseNeighbouringKmers.kmers[rkmer]});
+                              }
+                          }
+                          if(left2Kmers.includes(rkmer)) {
+                              if (responseNeighbouringKmers.kmers[rkmer]>0) {
+                                  nl2KmerData.push({"kmer": rkmer, 
+                                                   "frequency": responseNeighbouringKmers.kmers[rkmer]});
+                              }
+                          }
+                          if(right1Kmers.includes(rkmer)) {
+                              if (responseNeighbouringKmers.kmers[rkmer]>0) {
+                                  nr1KmerData.push({"kmer": rkmer, 
+                                                   "frequency": responseNeighbouringKmers.kmers[rkmer]});
+                              }
+                          }
+                          if(right2Kmers.includes(rkmer)) {
+                              if (responseNeighbouringKmers.kmers[rkmer]>0) {
+                                  nr2KmerData.push({"kmer": rkmer, 
+                                                   "frequency": responseNeighbouringKmers.kmers[rkmer]});
+                              }
+                          }
+                      }
+                      [lw1,lk1Yvalues] = drawKmers(nl1KmerData, (containerWidth/2) - (kmerWidth/2) - 2*kmerDistance, 
+                                                   kmerOffset, kmerHeight, "left", 
+                                                   (containerWidth/2) - (kmerWidth/2), kmerYvalues);
+                      drawKmers(nl2KmerData, (containerWidth/2) - (kmerWidth/2) - (lw1) - 4*kmerDistance, 
+                                                   kmerOffset, kmerHeight, "left",  
+                                                   (containerWidth/2) - (kmerWidth/2) - (lw1) - 2*kmerDistance, 
+                                                   lk1Yvalues);
+                      [rw1,rk1Yvalues] = drawKmers(nr1KmerData, (containerWidth/2) + (kmerWidth/2) + 2*kmerDistance, 
+                                                   kmerOffset, kmerHeight, "right", 
+                                                   (containerWidth/2) + (kmerWidth/2), kmerYvalues);
+                      drawKmers(nr2KmerData, (containerWidth/2) + (kmerWidth/2) + (rw1) + 4*kmerDistance, 
+                                                   kmerOffset, kmerHeight, "right",  
+                                                   (containerWidth/2) + (kmerWidth/2) + (rw1) + 2*kmerDistance, 
+                                                   rk1Yvalues);
+                  },
+                  error: function(jqXHR, textStatus, errorThrown ) {
+                      console.log(textStatus);
+                  }
+              });              
+                  
+          },
+          error: function(jqXHR, textStatus, errorThrown ) {
+              console.log(textStatus);
+          }
+        });
+        
     }
     
     function createParents(parents, createLinks=false, createBrackets=true) {
@@ -225,6 +629,9 @@ $( function() {
         };
     });
     
+    //always set basket
+    setBasket();
+    
     if(operation=="variety") {                
     
         if(identifier) {   
@@ -288,6 +695,24 @@ $( function() {
                             if(response.datasets[i].type=="kmer" || response.datasets[i].type=="split") {
                                 kmerDatasets.push(response.datasets[i]);
                             }
+                            var datasetSelectionButton = $("<button class=\"btn btn-sm fa-solid\"/>");
+                            if(checkSelectedDatasets(response.datasets[i].uid)) {
+                                datasetSelectionButton.addClass("fa-trash");
+                            } else {
+                                datasetSelectionButton.addClass("fa-plus");
+                            }
+                            var data = response.datasets[i];
+                            datasetSelectionButton.click(function(event) {
+                                event.preventDefault();
+                                if(!swapSelectedDatasets(data,response)) {
+                                    datasetSelectionButton.removeClass("fa-trash");
+                                    datasetSelectionButton.addClass("fa-plus");
+                                } else {
+                                    datasetSelectionButton.removeClass("fa-plus");
+                                    datasetSelectionButton.addClass("fa-trash");
+                                }
+                                return false;
+                            });
                             datasetsTbody.append($("<tr/>").append($("<td/>").text(response.datasets[i].type))
                                                  .append($("<td/>").append(
                                                     $("<a class=\"text-decoration-none\"/>")
@@ -295,7 +720,8 @@ $( function() {
                                                         .attr("href",
                                                               "collection/" + 
                                                               encodeURIComponent(response.datasets[i].collection.uid))))
-                                                 .append($("<td/>").text(response.datasets[i].collection.type)));
+                                                 .append($("<td/>").text(response.datasets[i].collection.type))
+                                                 .append($("<td/>").append(datasetSelectionButton)));
                         }
                         datasetsTable.append(datasetsTbody)
                         datasetsRow.append(datasetsTable);
@@ -327,8 +753,10 @@ $( function() {
                         }
                         cardFormBody.append(formSelect);
                         var formContainer = $("<div class=\"form-floating\"/>");
+                        var defaultSequence = (("apiInterfaceSequence" in sessionStorage)? 
+                                               sessionStorage.getItem("apiInterfaceSequence") : "");
                         var formTextarea = $("<textarea class=\"form-control\" placeholder=\"Enter sequence\" "+
-                                             "id=\"sequence\" style=\"height: 100px\"/>");
+                                             "id=\"sequence\" style=\"height: 100px\"/>").text(defaultSequence);
                         formContainer.append(formTextarea);
                         var formLabel = $("<label for=\"sequence\"/>").text("Sequence");
                         formContainer.append(formLabel);
@@ -355,6 +783,7 @@ $( function() {
                             if(datasetUid && sequence) {
                                 var oThis = $(this);
                                 oThis.find("button").attr("disabled",true);
+                                sequence = sequence.trim();
                                 $.ajax({
                                   url: apiLocation+"kmer/"+encodeURIComponent(datasetUid)+"/sequence",
                                   type: "post",
@@ -362,17 +791,29 @@ $( function() {
                                   contentType: "application/json",  
                                   data: JSON.stringify({"sequence": sequence, "mismatches": 0}),
                                   success: function(subResponse) {
+                                      if(sequence.length>0) {
+                                          sessionStorage.setItem("apiInterfaceSequence",sequence);
+                                      }
                                       var cardResult = $("<div class=\"card mt-3 mb-3\"/>");
                                       var cardResultHeader = $("<div "+
-                                           "class=\"card-header font-weight-bold bg-secundary text-dark\"/>")
-                                          .text("Result for sequence of length "+sequence.length);
+                                           "class=\"card-header font-weight-bold bg-secundary text-dark\"/>");
+                                      var cardResultButton = $("<button class=\"btn fa-solid fa-trash\"></button>");
+                                      cardResultButton.click(function(event) {
+                                          event.preventDefault();
+                                          cardResult.remove();
+                                          return false;
+                                      });
+                                      cardResultHeader.append($("<div class=\"float-start\"/>").text(
+                                          "Result for sequence of length "+sequence.length));
+                                      cardResultHeader.append($("<div class=\"float-end\"></div>").append(
+                                          cardResultButton));
                                       cardResult.append(cardResultHeader);                  
                                       var cardResultBody = $("<div class=\"card-body\"/>");
                                       var cardResultVisualization = $("<div/>");
                                       cardResultBody.append(cardResultVisualization);
                                       cardResult.append(cardResultBody); 
                                       $("#block-info").append(cardResult);
-                                      visualizeKmerDensity(cardResultVisualization,sequence,
+                                      visualizeKmerDensity(cardResultVisualization,datasetUid,sequence,
                                                            subResponse,response.name,collection);
                                       oThis.find("button").removeAttr("disabled");
                                       //check ancestors and offspring
@@ -557,7 +998,217 @@ $( function() {
         } else {
         }
         
-    }
+    } else if(operation=="datasets") {
+        var selectedDatasets = getSelectedDatasets();            
+        var cardContainer = $("<div class=\"card mt-3 mb-3\"/>");
+        var cardHeader = $("<div class=\"card-header font-weight-bold bg-primary text-white\"/>");
+        cardHeader.append($("<span class=\"me-1\"/>").text("Selected datasets"));
+        cardContainer.append(cardHeader);                  
+        var cardBody = $("<div class=\"card-body\"/>");
+        var cardTable = $("<table class=\"table table-bordered table-hover\"/>");
+        var cardTableHead = $("<thead/>");
+        cardTableHead.append($("<tr/>").append($("<th scope=\"col\"/>").text("Variety"))
+                                       .append($("<th scope=\"col\"/>").text("Year"))
+                                       .append($("<th scope=\"col\"/>").text("Origin"))
+                                       .append($("<th scope=\"col\"/>").text("Type"))
+                                       .append($("<th scope=\"col\"/>").text("Collection"))
+                                       .append($("<th scope=\"col\"/>").text("")));
+        cardTable.append(cardTableHead);
+        var cardTableBody = $("<tbody/>");
+        for(entry in selectedDatasets) {
+            var dataset = selectedDatasets[entry];
+            var datasetRow = $("<tr/>")
+            datasetRow.append($("<td scope=\"row\"/>").append(
+                $("<a class=\"text-decoration-none\"/>")
+                                     .text(dataset.variety.name)
+                                     .attr("href", "variety/"+encodeURIComponent(dataset.variety.uid))
+                ))
+            datasetRow.append($("<td/>").text(dataset.variety.year.description));
+            datasetRow.append($("<td/>").text(dataset.variety.origin.country));
+            datasetRow.append($("<td/>").text(dataset.type));
+            datasetRow.append($("<td scope=\"row\"/>").append(
+                $("<a class=\"text-decoration-none\"/>")
+                                     .text(dataset.collection.name)
+                                     .attr("href", "collection/"+encodeURIComponent(dataset.collection.uid))
+                ))
+            
+            var datasetDeleteButton = $("<button class=\"btn btn-sm fa-solid fa-trash\"/>");
+            datasetDeleteButton.click(function(event) {
+                event.preventDefault();                
+                deleteSelectedDatasets(dataset.uid);
+                datasetRow.remove();
+                return false;
+            });
+            datasetRow.append($("<td class=\"col-1 ms-auto\"/>").append(datasetDeleteButton));
+            cardTableBody.append(datasetRow);
+        }
+        cardTable.append(cardTableBody);
+        cardBody.append(cardTable);                    
+        cardContainer.append(cardBody); 
+        $("#block-info").append(cardContainer);
+        
+        if(selectedDatasets.length>0) {            
+            var cardForm = $("<div class=\"card mt-3 mb-3\"/>");
+            var cardFormContainer = $("<form/>");
+            var cardFormHeader = $("<div class=\"card-header font-weight-bold bg-secundary text-dark\"/>")
+                                        .text("Search sequence in datasets");
+            cardFormContainer.append(cardFormHeader);                  
+            var cardFormBody = $("<div class=\"card-body\"/>");            
+            var formContainer = $("<div class=\"form-floating\"/>");
+            var defaultSequence = (("apiInterfaceSequence" in sessionStorage)? 
+                                   sessionStorage.getItem("apiInterfaceSequence") : "");
+            var formTextarea = $("<textarea class=\"form-control\" placeholder=\"Enter sequence\" "+
+                                 "id=\"sequence\" style=\"height: 100px\"/>").text(defaultSequence);
+            formContainer.append(formTextarea);
+            var formLabel = $("<label for=\"sequence\"/>").text("Sequence");
+            formContainer.append(formLabel);
+            var formButtons = $("<div class=\"d-grid gap-2 d-md-flex justify-content-md-end\"/>");
+            var formSubmitButton = $("<button class=\"btn btn-primary mt-2 pull-right\"/>")
+                    .attr("type","submit").text("Search");
+            formButtons.append(formSubmitButton);
+            formContainer.append(formButtons);
+            cardFormBody.append(formContainer);
+            cardFormContainer.append(cardFormBody);
+            cardForm.append(cardFormContainer);
+            $("#block-info").append(cardForm);
+
+            cardFormContainer.submit(async function (e) {
+                e.preventDefault();
+                var oThis = $(this);
+                oThis.find("button").attr("disabled",true);
+                var selectedDatasets = getSelectedDatasets();   
+                for(var i=0; i<5; i++) {
+                    selectedDatasets =selectedDatasets.concat(selectedDatasets);
+                }    
+                var sequence = $.trim($(this).find("textarea").val());
+                //output
+                var cardResult = $("<div class=\"card mt-3 mb-3\"/>");
+                var cardResultHeader = $("<div "+
+                   "class=\"card-header font-weight-bold bg-secundary text-dark\"/>");
+                var cardResultButton = $("<button class=\"btn fa-solid fa-trash\"></button>");
+                cardResultButton.click(function(event) {
+                  event.preventDefault();
+                  cardResult.remove();
+                  return false;
+                });
+                cardResultHeader.append($("<div class=\"float-start\"/>").text(
+                  "Result for sequence of length "+sequence.length+" and "+selectedDatasets.length+" datasets"));
+                cardResultHeader.append($("<div class=\"float-end\"></div>").append(
+                  cardResultButton));
+                cardResult.append(cardResultHeader);                  
+                var cardResultBody = $("<div class=\"card-body overflow-scroll\"/>");
+                var cardResultTable = $("<table class=\"table table-bordered table-hover\"/>");
+                var cardResultTableHead = $("<thead/>");
+                cardResultTableHeadRow = $("<tr/>").append($("<th scope=\"col\"/>").text("k-mer"));
+                cardResultTableBodyRowYear = $("<tr/>").append($("<th scope=\"col\"/>")).hide();
+                for (var j=0; j<selectedDatasets.length; j++) {
+                    cardResultTableHeadRow.append($("<th scope=\"col\"/>")
+                                  .text(selectedDatasets[j].variety.name+" "+j)
+                                  .css("text-orientation","mixed").css("writing-mode","vertical-rl"));
+                    cardResultTableBodyRowYear.append($("<th scope=\"col\"/>")
+                                  .text(selectedDatasets[j].variety.year.description));
+                }
+                cardResultTableHead.append(cardResultTableHeadRow)
+                cardResultTable.append(cardResultTableHead);
+                var cardResultTableBody = $("<tbody/>");
+                cardResultTableBody.append(cardResultTableBodyRowYear)
+                cardResultTable.append(cardResultTableBody);                 
+                cardResultBody.append($("<div/>").append(cardResultTable));
+                cardResult.append(cardResultBody); 
+                $("#block-info").append(cardResult);                
+                //process data
+                var datasetCounter;                
+                for(datasetCounter=0;datasetCounter<selectedDatasets.length;datasetCounter++) {
+                    var datasetUid = selectedDatasets[datasetCounter].uid;
+                    if(datasetUid && sequence) {
+                        sequence = sequence.trim();
+                        await $.ajax({
+                          url: apiLocation+"kmer/"+encodeURIComponent(datasetUid)+"/sequence",
+                          type: "post",
+                          dataType: "json",
+                          contentType: "application/json",  
+                          data: JSON.stringify({"sequence": sequence, "mismatches": 0}),
+                          success: function(subResponse) {
+                              if(sequence.length>0) {
+                                  sessionStorage.setItem("apiInterfaceSequence",sequence);
+                              }    
+                              //create table
+                              if(datasetCounter==0) {
+                                  var k = subResponse.info.kmer_length;
+                                  var n = sequence.length - k + 1;
+                                  for (var i = 0; i < n; i++) {
+                                      var skmer = sequence.substring(i,i+k);
+                                      cardResultTableRow = $("<tr/>").attr("data-kmer",skmer);
+                                      cardResultTableRow.append($("<th class=\"col-3\"/>").attr("scope","row").text(skmer));
+                                      for (var j=0; j<selectedDatasets.length; j++) {
+                                          cardResultTableRow.append($("<td class=\"col-1 ms-auto\"/>"));
+                                      }
+                                      cardResultTableBody.append(cardResultTableRow);
+                                  }
+                              }
+                              //fill correct column 
+                              if(Object.keys(subResponse.kmers).length>0) {
+                                  var subsetValues = []
+                                  for(var value in Object.values(subResponse.kmers)) {
+                                      if(value>0) {
+                                          subsetValues.push(value);
+                                      }    
+                                  }
+                                  subsetValues.sort();
+                                  var maxValue = 3*subsetValues[Math.floor(subsetValues.length/2)];
+                                  var minValue = 1;
+                                  for(var rkmer in subResponse.kmers) {
+                                      var frequency = subResponse.kmers[rkmer];
+                                      var rgb = 255 - Math.max(0,Math.min(255,Math.ceil(255*(frequency-minValue)/maxValue)));
+                                      if(frequency==0) {
+                                          cardResultTableBody.find("tr[data-kmer=\""+rkmer+"\"] td:eq("+datasetCounter+")")
+                                              .text(frequency).addClass("bg-danger text-white text-center");
+                                      } else {
+                                          cardResultTableBody.find("tr[data-kmer=\""+rkmer+"\"] td:eq("+datasetCounter+")")
+                                              .text(frequency+datasetCounter).addClass("text-white text-center")
+                                              .css("background-color","rgb("+rgb+",0,"+rgb+")");
+                                      }
+                                  }
+                              }    
+                              if(datasetCounter==selectedDatasets.length-1) {
+                                 cardResultTable.DataTable( {
+                                    colReorder: true,
+                                    paging: false,
+                                    searching: false,
+                                    ordering: false,
+                                    info: false,
+                                    dom: "B<'row'<'col-sm-12 col-md-6'l><'col-sm-12 col-md-6'f>>" +
+                                         "<'row'<'col-sm-12'tr>>" +
+                                         "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>",
+                                    buttons: [
+                                        {
+                                            extend: "csv",
+                                            text: "CSV",
+                                            filename: "kmer_frequencies_"+new Date().toISOString().split(".")[0]
+                                        },
+                                        {
+                                            extend: "excel",
+                                            text: "EXCEL",
+                                            messageTop: false,
+                                            sheetName: "frequencies",
+                                            filename: "kmer_frequencies_"+new Date().toISOString().split(".")[0]
+                                        }
+                                    ]
+                                } );                                
+                              }
+                              oThis.find("button").removeAttr("disabled");
+                          },
+                          error: function(jqXHR, textStatus, errorThrown ) {
+                              oThis.find("button").removeAttr("disabled");
+                          }
+                        });
+                    }                
+                }
+                return true;
+            });
+        }
+
+    } 
     
 
     

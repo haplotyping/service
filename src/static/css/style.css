@@ -34,6 +34,55 @@ main {
   max-width: 1024px;
 }
 
+div.tooltip {
+  background-color: #FFFFE0;
+  padding: 3px;
+  border: 1px solid #000000;
+  overflow: visible;
+}
+
 body.background main {
   
+}
+
+svg rect.found {
+  fill: black;
+}
+
+svg rect.found.hover {
+  fill: grey;
+}
+
+svg rect.found.selected {
+  fill: yellow;
+  stroke: grey;
+  stroke-width: 1;
+}
+
+svg rect.missing {
+  fill: red;
+}
+
+svg rect.missing.hover {
+  fill: orange;
+}
+
+svg rect.missing.selected {
+  fill: yellow;
+  stroke: orange;
+  stroke-width: 1;
+}
+
+svg rect.kmer {
+  fill: white;
+  stroke: grey;
+  stroke-width: 1;
+}
+
+svg rect.kmer.sequence {
+  fill: orange;
+}
+
+svg rect.kmer.selected {
+  fill: yellow;
 }
