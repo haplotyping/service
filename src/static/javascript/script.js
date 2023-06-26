@@ -256,7 +256,7 @@ $( function() {
             
 
             function zoomIn() {     
-                var nWidth = Math.min(4*containerWidth,Math.floor(1.1*svg.attr("width")));
+                var nWidth = Math.min(10*containerWidth,Math.floor(1.1*svg.attr("width")));
                 svg.attr("width", nWidth);
                 svg.attr("viewBox", "0 0 "+(containerWidth)+" "+(containerHeight));
             }
