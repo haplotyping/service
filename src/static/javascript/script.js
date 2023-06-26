@@ -99,6 +99,7 @@ $( function() {
         
     
     function visualizeKmerDensity(container,datasetUid,sequence,response,title,collection) {
+        container.addClass("overflow-x-auto");
         var k = response.info.kmer_length;
         var n = sequence.length - k + 1;
         if(n<=0) {
@@ -112,7 +113,10 @@ $( function() {
                                .append($("<strong/>").text(title))
                                .append($("<span class=\"small\"/>").text(", "+collection))
                                .append($("<span class=\"small\"/>")
-                                       .text(", "+(sequence.length-k+1-response.stats.positive)+" missing k-mers")));        
+                                       .text(", "+(sequence.length-k+1-response.stats.positive)+" missing k-mers")));  
+            var scrollContainer = $("<div/>").addClass("overflow-x-auto");
+            container.append(scrollContainer);
+            
             var bins = []
             var sequenceKmers = []
             for (var i = 0; i < n; i++) {
@@ -132,18 +136,19 @@ $( function() {
                 marginLeft = 40,
                 marginTop = 20,
                 marginRight = 20;
-            var svg = d3.select(container.get(0)).append("svg")
+            var svg = d3.select(scrollContainer.get(0)).append("svg")
                 .attr("width", containerWidth)
                 .attr("height", containerHeight)
-                .append("g")
-                .attr("transform", "translate(0,0)");
-                
+                .attr("viewBox", "0 0 "+(containerWidth)+" "+(containerHeight))
+                .attr("preserveAspectRatio","none");
+            var g = svg.append("g").attr("transform", "translate(0,0)");
+
             var kmerResult = $("<div class=\"card mt-3 mb-3\"/>");
             var kmerResultHeader = $("<div "+
                 "class=\"card-header font-weight-bold bg-secundary text-dark py-0\"/>");
             var kmerResultButton = $("<button class=\"btn btn-sm fa-solid fa-xmark\"></button>");
             kmerResultButton.click(function(event) {
-                svg.selectAll("rect").classed("selected", false);
+                g.selectAll("rect").classed("selected", false);
                 event.preventDefault();
                 kmerResultHeaderText.text("");
                 kmerResultBody.text("");
@@ -161,7 +166,7 @@ $( function() {
             var x = d3.scaleLinear()
                   .domain([0,sequence.length-k+1])     
                   .range([0, containerWidth-marginLeft-marginRight]);
-            svg.append("g")
+            g.append("g")
                   .attr("transform", "translate(" + (marginLeft+(x(1)/2))+ "," + (containerHeight-marginBottom) + ")")
                   .call(d3.axisBottom(x).ticks(Math.min((sequence.length - k + 1),10)).tickFormat(d3.format("d")));
 
@@ -173,12 +178,12 @@ $( function() {
                   .range([containerHeight-marginBottom,marginTop]);
                   y.domain([0, response.stats.maximum]);
 
-            svg.append("g")
+            g.append("g")
                   .attr("transform", "translate(" + marginLeft + ",0)")
                   .call(d3.axisLeft(y).tickFormat(d3.format("d")));
                   
                   
-            svg.append("g").selectAll(".rect1")
+            g.append("g").selectAll(".rect1")
                   .data(bins)
                   .enter()
                   .append("rect")
@@ -209,12 +214,12 @@ $( function() {
                     }).on("click", function(e) { 
                         var kmer = e.target.getAttribute("data-kmer");
                         var frequency = e.target.getAttribute("data-frequency");
-                        displayKmerInfo(datasetUid,kmer,frequency,sequenceKmers,svg,kmerResult,kmerResultBody,
+                        displayKmerInfo(datasetUid,kmer,frequency,sequenceKmers,g,kmerResult,kmerResultBody,
                             kmerResultHeaderText,toolTip,marginBottom);                                        
                     });
                     
 
-            svg.append("g").selectAll(".rect2")
+            g.append("g").selectAll(".rect2")
                   .data(bins)
                   .enter()
                   .append("rect")
@@ -244,9 +249,39 @@ $( function() {
                         e.stopPropagation();                         
                     }).on("click", function(e) { 
                         var kmer = e.target.getAttribute("data-kmer");
-                        displayKmerInfo(datasetUid,kmer,0,sequenceKmers,svg,kmerResult,kmerResultBody,
+                        displayKmerInfo(datasetUid,kmer,0,sequenceKmers,g,kmerResult,kmerResultBody,
                             kmerResultHeaderText,toolTip,marginBottom);                     
                     });
+            
+            
+
+            function zoomIn() {     
+                var nWidth = Math.min(4*containerWidth,Math.floor(1.1*svg.attr("width")));
+                svg.attr("width", nWidth);
+                svg.attr("viewBox", "0 0 "+(containerWidth)+" "+(containerHeight));
+            }
+
+            function zoomOut() {
+                var nWidth = Math.max(containerWidth,Math.ceil(svg.attr("width")/1.1));
+                svg.attr("width", nWidth);
+                svg.attr("viewBox", "0 0 "+(containerWidth)+" "+(containerHeight));
+            }
+
+            function resetZoom() {
+                svg.attr("width", containerWidth);
+                svg.attr("viewBox", "0 0 "+(containerWidth)+" "+(containerHeight));
+            }
+            
+            var zoomInButton = $("<button class=\"btn btn-sm fa-solid fa-magnifying-glass-plus float-end\"/>")
+                                    .on("click", function(e) {zoomIn();});
+            var zoomOutButton = $("<button class=\"btn btn-sm fa-solid fa-magnifying-glass-minus float-end\"/>")
+                                    .on("click", function(e) {zoomOut();});
+            var zoomResetButton = $("<button class=\"btn btn-sm fa-solid fa-magnifying-glass float-end\"/>")
+                                    .on("click", function(e) {resetZoom();});
+            container.prepend(zoomOutButton);
+            container.prepend(zoomResetButton);                       
+            container.prepend(zoomInButton);
+            
         }
     }
     
@@ -259,6 +294,8 @@ $( function() {
               }).classed("selected", true); 
         kmerResultHeaderText.text(kmer+": "+frequency+"x");
         kmerResultBody.text("");
+        kmerResultWarning = $("<div class=\"alert alert-warning\" role=\"alert\"/>").text("Loading k-mer data...");
+        kmerResultBody.append(kmerResultWarning);
         kmerResult.show();
         
         function drawKmers(data, x, top, step, type = "main", lineX=0, previousYValues) { 
@@ -474,6 +511,7 @@ $( function() {
                                                    kmerOffset, kmerHeight, "right",  
                                                    (containerWidth/2) + (kmerWidth/2) + (rw1) + 2*kmerDistance, 
                                                    rk1Yvalues);
+                      kmerResultWarning.remove();
                   },
                   error: function(jqXHR, textStatus, errorThrown ) {
                       console.log(textStatus);
@@ -1133,7 +1171,9 @@ $( function() {
                 cardResultTableBody.append(cardResultTableBodyRowOrigin)
                 cardResultTableBody.append(cardResultTableBodyRowType)
                 cardResultTableBody.append(cardResultTableBodyRowCollection)
-                cardResultTable.append(cardResultTableBody);                 
+                cardResultTable.append(cardResultTableBody); 
+                cardResultWarning = $("<div class=\"alert alert-warning\" role=\"alert\"/>").text("Loading k-mer data...");
+                cardResultBody.append(cardResultWarning);
                 cardResultBody.append($("<div/>").append(cardResultTable));
                 cardResult.append(cardResultBody); 
                 $("#block-info").append(cardResult);                
@@ -1195,6 +1235,7 @@ $( function() {
                                   }
                               }    
                               if(datasetCounter==selectedDatasets.length-1) {
+                                 cardResultWarning.remove();
                                  cardResultTable.DataTable( {
                                     colReorder: {
                                         fixedColumnsLeft: 1
