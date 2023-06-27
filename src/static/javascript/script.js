@@ -777,8 +777,8 @@ $( function() {
                     if(kmerDatasets.length>0) {
                         var cardForm = $("<div class=\"card mt-3 mb-3\"/>");
                         var cardFormContainer = $("<form/>");
-                        var cardFormHeader = $("<div class=\"card-header font-weight-bold bg-secundary text-dark\"/>")
-                                                    .text("Search sequence "+response.name);
+                        var cardFormHeader = $("<div class=\"card-header font-weight-bold bg-secundary text-dark\"/>");
+                        cardFormHeader.append($("<span />").text("Search sequence "+response.name));                        
                         cardFormContainer.append(cardFormHeader);                  
                         var cardFormBody = $("<div class=\"card-body\"/>");
                         var formSelect = $("<select class=\"form-select mb-2\"/>");
@@ -805,6 +805,17 @@ $( function() {
                         var formButtons = $("<div class=\"d-grid gap-2 d-md-flex justify-content-md-end\"/>");
                         var formSubmitButton = $("<button class=\"btn btn-primary mt-2 pull-right\"/>")
                                 .attr("type","submit").text("Search");
+                        if(!(defaultSequence=="")) {
+                            var cardResetButton = $("<button class=\"btn fa-solid fa-rotate-left\"></button>");
+                            cardFormHeader.append($("<div class=\"float-end\"></div>").append(cardResetButton));
+                            cardResetButton.click(function(event) {
+                              event.preventDefault();
+                              formTextarea.text("");
+                              sessionStorage.setItem("apiInterfaceSequence","");
+                              cardResetButton.remove();
+                              return false;
+                            });
+                        }
                         formButtons.append(formSubmitButton);
                         formContainer.append(formButtons);
                         cardFormBody.append(formContainer);
@@ -1095,8 +1106,8 @@ $( function() {
         if(selectedDatasets.length>0) {            
             var cardForm = $("<div class=\"card mt-3 mb-3\"/>");
             var cardFormContainer = $("<form/>");
-            var cardFormHeader = $("<div class=\"card-header font-weight-bold bg-secundary text-dark\"/>")
-                                        .text("Search sequence in datasets");
+            var cardFormHeader = $("<div class=\"card-header font-weight-bold bg-secundary text-dark\"/>");
+            cardFormHeader.append($("<span />").text("Search sequence in datasets"));
             cardFormContainer.append(cardFormHeader);                  
             var cardFormBody = $("<div class=\"card-body\"/>");            
             var formContainer = $("<div class=\"form-floating\"/>");
@@ -1110,6 +1121,17 @@ $( function() {
             var formButtons = $("<div class=\"d-grid gap-2 d-md-flex justify-content-md-end\"/>");
             var formSubmitButton = $("<button class=\"btn btn-primary mt-2 pull-right\"/>")
                     .attr("type","submit").text("Search");
+            if(!(defaultSequence=="")) {
+                var cardResetButton = $("<button class=\"btn fa-solid fa-rotate-left\"></button>");
+                cardFormHeader.append($("<div class=\"float-end\"></div>").append(cardResetButton));
+                cardResetButton.click(function(event) {
+                  event.preventDefault();
+                  formTextarea.text("");
+                  sessionStorage.setItem("apiInterfaceSequence","");
+                  cardResetButton.remove();
+                  return false;
+                });
+            }
             formButtons.append(formSubmitButton);
             formContainer.append(formButtons);
             cardFormBody.append(formContainer);
