@@ -633,11 +633,13 @@ $( function() {
             focus: function() {
             // prevent value inserted on focus
                 return false;
-            },
+            }
         }).autocomplete( "instance" )._renderItem = function( ul, item ) {
             var content = $("<div/>");
             var contentMain = $("<div/>");
+            if(item.type=="species") {contentMain.append($("<span/>").text("["));}            
             contentMain.append($("<span class=\"fw-bold\"/>").text(item.name));
+            if(item.type=="species") {contentMain.append($("<span/>").text("]"));}
             if(item.synonyms) {
                 contentMain.append($("<span class=\"mx-2\"/>").text("-"));
                 contentMain.append($("<span class=\"small fw-light\"/>").text(
@@ -684,7 +686,8 @@ $( function() {
                 } else {
                     var cardContainer = $("<div class=\"card mt-3 mb-3\"/>");
                     var cardHeader = $("<div class=\"card-header font-weight-bold bg-primary text-white\"/>");
-                    cardHeader.append($("<span class=\"me-1\"/>").text("Variety information"));
+                    cardHeader.append($("<span class=\"me-1\"/>").text(
+                        (response.type=="species"?"Species":"Variety")+" information"));
                     cardHeader.append($("<strong/>").text(response.name));
                     cardContainer.append(cardHeader);                  
                     var cardBody = $("<div class=\"card-body\"/>");
@@ -693,11 +696,19 @@ $( function() {
                     cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Name"))
                                                    .append($("<td class=\"col-3\"/>").attr("scope","row")
                                                                                      .text(response.name)));
+                    cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Type"))
+                                                   .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                                                     .text(response.type)));
                     if(response.synonyms) {
                         cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Synonym"))
                                                        .append($("<td class=\"col-3\"/>").attr("scope","row")
                                                                                          .text(response.synonyms
                                                                                                .replace(/,/g,", "))));
+                    }
+                    if(response.species_id) {
+                        cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Species"))
+                                                   .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                                                     .text(response.species_name)));
                     }
                     if(response.year) {
                         cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Year"))
@@ -708,6 +719,11 @@ $( function() {
                         cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Origin"))
                                                        .append($("<td class=\"col-3\"/>").attr("scope","row")
                                                        .text(response.origin.country+" ("+response.origin.uid+")")));
+                    }
+                    if(response.breeder_id) {
+                        cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Breeder"))
+                                                   .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                                                     .text(response.breeder_name)));
                     }
                     if(response.parents && (response.parents.length>0)) {
                         cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Parents"))
