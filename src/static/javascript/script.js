@@ -807,8 +807,14 @@ $( function() {
                             formSelect.attr("disabled",1);
                         }
                         for (var i=0;i<kmerDatasets.length;i++) {
-                            var formOption = $("<option/>").attr("value",kmerDatasets[i].uid)
-                                                      .text(kmerDatasets[i].collection.name+" - "+kmerDatasets[i].uid);
+                            var formOption = $("<option/>").attr("value",kmerDatasets[i].uid);
+                            if(kmerDatasets[i].collection.experiment) {
+                                formOption.text(kmerDatasets[i].collection.name+" - "+
+                                                kmerDatasets[i].collection.experiment+" - "+
+                                                kmerDatasets[i].uid);
+                            } else {
+                                formOption.text(kmerDatasets[i].collection.name+" - "+kmerDatasets[i].uid);
+                            }
                             if(i==0) {
                                 formOption.attr("selected","1");
                             }
@@ -851,7 +857,12 @@ $( function() {
                             var collection = datasetUid;
                             for (var i=0;i<response.datasets.length;i++) {
                                 if(response.datasets[i].uid==datasetUid) {
-                                    collection = response.datasets[i].collection.name;
+                                    if(response.datasets[i].collection.experiment) {
+                                        collection = (response.datasets[i].collection.name + 
+                                                      response.datasets[i].collection.experiment);
+                                    } else {                                        
+                                        collection = response.datasets[i].collection.name;
+                                    }
                                 }
                             }
                             if(datasetUid && sequence) {
@@ -964,9 +975,11 @@ $( function() {
                     cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Name"))
                                                    .append($("<td class=\"col-3\"/>").attr("scope","row")
                                                                                      .text(response.name)));
-                    cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Experiment"))
+                    if(response.experiment) {
+                        cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Experiment"))
                                                    .append($("<td class=\"col-3\"/>").attr("scope","row")
                                                                                      .text(response.experiment)));
+                    }
                     cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Type"))
                                                    .append($("<td class=\"col-3\"/>").attr("scope","row")
                                                                                      .text(response.type)));
