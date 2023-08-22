@@ -858,7 +858,7 @@ $( function() {
                             for (var i=0;i<response.datasets.length;i++) {
                                 if(response.datasets[i].uid==datasetUid) {
                                     if(response.datasets[i].collection.experiment) {
-                                        collection = (response.datasets[i].collection.name + 
+                                        collection = (response.datasets[i].collection.name + " - " +
                                                       response.datasets[i].collection.experiment);
                                     } else {                                        
                                         collection = response.datasets[i].collection.name;
