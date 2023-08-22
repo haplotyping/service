@@ -814,7 +814,7 @@ $( function() {
                                                         .attr("href",
                                                               "collection/" + 
                                                               encodeURIComponent(response.datasets[i].collection.uid)));
-                            if(collection.experiment) {
+                            if(response.datasets[i].collection.experiment) {
                                 datasetRowName.append($("<div class=\"small text-secondary\"/>")
                                                       .text(response.datasets[i].collection.experiment));
                             }
