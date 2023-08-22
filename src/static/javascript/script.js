@@ -749,7 +749,7 @@ $( function() {
                                         offspringTableRow = $("<tr/>");
                                     }
                                     offspringTableRow.append(
-                                            $("<td class=\"small text-sm-end\"/>").text(response.offspring[i]
+                                            $("<td class=\"small text-sm-center\"/>").text(response.offspring[i]
                                                                       .datasets[j].type));
                                     var datasetRowName = $("<td class=\"text-sm-end\"/>");
                                     datasetRowName.append($("<a class=\"small text-decoration-none\"/>")
@@ -760,7 +760,8 @@ $( function() {
                                                               encodeURIComponent(response.offspring[i]
                                                                       .datasets[j].collection.uid)));
                                     if(response.offspring[i].datasets[j].collection.experiment) {
-                                        datasetRowName.append($("<div class=\"small text-secondary\"/>")
+                                        datasetRowName.append($("<span/>").html("&nbsp;"));
+                                        datasetRowName.append($("<span class=\"small text-secondary\"/>")
                                                               .text(response.offspring[i].datasets[j].collection.experiment));
                                     }
                                     offspringTableRow.append(datasetRowName.attr("title",response.offspring[i]
@@ -771,7 +772,7 @@ $( function() {
                             }
                             offspringTableBody.append(offspringTableRow);
                         }
-                        offspringRow.append($("<table class=\"table table-borderless\"/>").append(offspringTableBody));
+                        offspringRow.append($("<table class=\"table table-sm table-bordered\"/>").append(offspringTableBody));
                         cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Offspring"))
                                                        .append(offspringRow));
                     }
