@@ -732,11 +732,46 @@ $( function() {
                     }
                     if(response.offspring && (response.offspring.length>0)) {
                         var offspringRow = $("<td class=\"col-3\"/>").attr("scope","row");
+                        var offspringTableBody = $("<tbody/>");
                         for (var i=0;i<response.offspring.length;i++) {
-                            offspringRow.append($("<div/>").append($("<a class=\"text-decoration-none\"/>").attr("href",
+                            var offspringTableRow = $("<tr/>");
+                            var offspringTableRowMain = $("<td/>")
+                                    .append($("<a class=\"text-decoration-none\"/>").attr("href",
                                    "variety/"+encodeURIComponent(response.offspring[i].uid))
-                                                           .text(response.offspring[i].name)));
+                                                           .text(response.offspring[i].name));
+                            var offspringTableRowDatasets = $("<td/>");
+                            if(response.offspring[i].datasets && (response.offspring[i].datasets.length>0)) {
+                                offspringTableRowMain.attr("rowspan",response.offspring[i].datasets.length);
+                                offspringTableRow.append(offspringTableRowMain);
+                                for (var j=0;j<response.offspring[i].datasets.length;j++) {
+                                    if(j>0) {
+                                        offspringTableBody.append(offspringTableRow);
+                                        offspringTableRow = $("<tr/>");
+                                    }
+                                    offspringTableRow.append(
+                                            $("<td class=\"small text-sm-end\"/>").text(response.offspring[i]
+                                                                      .datasets[j].type));
+                                    var datasetRowName = $("<td class=\"text-sm-end\"/>");
+                                    datasetRowName.append($("<a class=\"small text-decoration-none\"/>")
+                                                        .text(response.offspring[i]
+                                                                      .datasets[j].collection.name)
+                                                        .attr("href",
+                                                              "collection/" + 
+                                                              encodeURIComponent(response.offspring[i]
+                                                                      .datasets[j].collection.uid)));
+                                    if(response.offspring[i].datasets[j].collection.experiment) {
+                                        datasetRowName.append($("<div class=\"small text-secondary\"/>")
+                                                              .text(response.offspring[i].datasets[j].collection.experiment));
+                                    }
+                                    offspringTableRow.append(datasetRowName.attr("title",response.offspring[i]
+                                                                             .datasets[j].collection.type));                                    
+                                }
+                            } else {
+                                offspringTableRow.append(offspringTableRowMain);
+                            }
+                            offspringTableBody.append(offspringTableRow);
                         }
+                        offspringRow.append($("<table class=\"table table-borderless\"/>").append(offspringTableBody));
                         cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Offspring"))
                                                        .append(offspringRow));
                     }
@@ -779,8 +814,10 @@ $( function() {
                                                         .attr("href",
                                                               "collection/" + 
                                                               encodeURIComponent(response.datasets[i].collection.uid)));
-                            datasetRowName.append($("<div class=\"small text-secondary\"/>")
+                            if(collection.experiment) {
+                                datasetRowName.append($("<div class=\"small text-secondary\"/>")
                                                       .text(response.datasets[i].collection.experiment));
+                            }
                             datasetRow.append(datasetRowName);
                             datasetRow.append($("<td/>").text(response.datasets[i].collection.type));
                             datasetRow.append($("<td/>").append(datasetSelectionButton));
