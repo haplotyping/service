@@ -771,15 +771,20 @@ $( function() {
                             } else {
                                 var datasetSelectionButton = $("<span/>");                                
                             }
-                            datasetsTbody.append($("<tr/>").append($("<td/>").text(response.datasets[i].type))
-                                                 .append($("<td/>").append(
-                                                    $("<a class=\"text-decoration-none\"/>")
+                            var datasetRow = $("<tr/>");
+                            datasetRow.append($("<td/>").text(response.datasets[i].type));
+                            var datasetRowName = $("<td/>");
+                            datasetRowName.append($("<a class=\"text-decoration-none\"/>")
                                                         .text(response.datasets[i].collection.name)
                                                         .attr("href",
                                                               "collection/" + 
-                                                              encodeURIComponent(response.datasets[i].collection.uid))))
-                                                 .append($("<td/>").text(response.datasets[i].collection.type))
-                                                 .append($("<td/>").append(datasetSelectionButton)));
+                                                              encodeURIComponent(response.datasets[i].collection.uid)));
+                            datasetRowName.append($("<div class=\"small text-secondary\"/>")
+                                                      .text(response.datasets[i].collection.experiment));
+                            datasetRow.append(datasetRowName);
+                            datasetRow.append($("<td/>").text(response.datasets[i].collection.type));
+                            datasetRow.append($("<td/>").append(datasetSelectionButton));
+                            datasetsTbody.append(datasetRow);
                         }
                         datasetsTable.append(datasetsTbody)
                         datasetsRow.append(datasetsTable);
@@ -1316,7 +1321,5 @@ $( function() {
         }
 
     } 
-    
-
     
 });
