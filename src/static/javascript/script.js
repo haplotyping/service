@@ -1257,10 +1257,18 @@ $( function() {
                     cardResultTableHeadRow.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].variety.name)
                                   .css("text-orientation","mixed").css("writing-mode","vertical-rl"));
-                    cardResultTableBodyRowYear.append($("<th scope=\"col\"/>")
+                    if(selectedDatasets[j].variety.year) {
+                        cardResultTableBodyRowYear.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].variety.year.description));
-                    cardResultTableBodyRowOrigin.append($("<th scope=\"col\"/>")
+                    } else {
+                        cardResultTableBodyRowYear.append($("<th scope=\"col\"/>"));
+                    }
+                    if(selectedDatasets[j].variety.origin) {
+                        cardResultTableBodyRowOrigin.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].variety.origin.country));
+                    } else {
+                        cardResultTableBodyRowYear.append($("<th scope=\"col\"/>"));
+                    }
                     cardResultTableBodyRowType.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].collection.type));
                     cardResultTableBodyRowCollection.append($("<th scope=\"col\"/>")
