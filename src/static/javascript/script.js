@@ -1148,8 +1148,16 @@ $( function() {
                                      .text(dataset.variety.name)
                                      .attr("href", "variety/"+encodeURIComponent(dataset.variety.uid))
                 ))
-            datasetRow.append($("<td/>").text(dataset.variety.year.description));
-            datasetRow.append($("<td/>").text(dataset.variety.origin.country));
+            if(dataset.variety.year) {
+                datasetRow.append($("<td/>").text(dataset.variety.year.description));
+            } else {
+                datasetRow.append($("<td/>"));
+            }
+            if(dataset.variety.origin) {
+                datasetRow.append($("<td/>").text(dataset.variety.origin.country));
+            } else {
+                datasetRow.append($("<td/>"));
+            }
             datasetRow.append($("<td/>").text(dataset.collection.type));
             datasetRow.append($("<td scope=\"row\"/>").append(
                 $("<a class=\"text-decoration-none\"/>")
