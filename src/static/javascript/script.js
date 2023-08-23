@@ -1267,7 +1267,7 @@ $( function() {
                         cardResultTableBodyRowOrigin.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].variety.origin.country));
                     } else {
-                        cardResultTableBodyRowYear.append($("<th scope=\"col\"/>"));
+                        cardResultTableBodyRowOrigin.append($("<th scope=\"col\"/>"));
                     }
                     cardResultTableBodyRowType.append($("<th scope=\"col\"/>")
                                   .text(selectedDatasets[j].collection.type));
