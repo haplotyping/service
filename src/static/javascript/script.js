@@ -565,6 +565,32 @@ $( function() {
         return container;
     }
     
+    function createParentList(parents, onlyDatasets, parentList=[]) {
+        var idList = [];
+        for (var i=0; i<parentList.length; i++) {
+            if("uid" in parentList[i]) {
+                idList.push(parentList[i]["uid"]);
+            }
+        }
+        for (var i=0; i<parents.length; i++) {
+            if(parents[i].parents) {
+                parentList = parentList.concat(createParentList(parents[i].parents, onlyDatasets));
+            } else if("uid" in parents[i]) {
+                if (!(parents[i]["uid"] in idList)) {
+                    if (onlyDatasets && (!("datasets" in parents[i]))) {
+                        //
+                    } else if (onlyDatasets && (parents[i]["datasets"].length==0)) {
+                        //
+                    } else {
+                        parentList.push(parents[i]);
+                        idList.push(parents[i]["uid"]);
+                    }
+                }
+            }
+        }
+        return parentList;
+    }
+    
     function createVarietyListEntry(item) {
         var entry = $("<a class=\"list-group-item d-flex justify-content-between align-items-start\"/>")
         entry.attr("href", "variety/"+item.uid);
@@ -725,10 +751,62 @@ $( function() {
                                                    .append($("<td class=\"col-3\"/>").attr("scope","row")
                                                                                      .text(response.breeder_name)));
                     }
-                    if(response.parents && (response.parents.length>0)) {
+                    if(response.parents && (response.parents.length>0)) {                        
                         cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Parents"))
                                                        .append($("<td class=\"col-3\"/>").attr("scope","row")
                                                        .append(createParents(response.parents, true, false))));
+                        datasetParentList = createParentList(response.parents, true);
+                        if(datasetParentList.length>0) {
+                            var parentsRow = $("<td class=\"col-3\"/>").attr("scope","row");
+                            var parentsTableBody = $("<tbody/>");
+                            for (var i=0;i<datasetParentList.length;i++) {
+                                var parentsTableRow = $("<tr/>");
+                                var parentsTableRowMain = $("<td/>")
+                                        .append($("<a class=\"text-decoration-none\"/>").attr("href",
+                                       "variety/"+encodeURIComponent(datasetParentList[i].uid))
+                                                               .text(datasetParentList[i].name));
+                                var parentsTableRowDatasets = $("<td/>");
+                                if(datasetParentList[i].datasets && (datasetParentList[i].datasets.length>0)) {
+                                    parentsTableRowMain.attr("rowspan",datasetParentList[i].datasets.length);
+                                    parentsTableRow.append(parentsTableRowMain);
+                                    for (var j=0;j<datasetParentList[i].datasets.length;j++) {
+                                        if(j>0) {
+                                            parentsTableBody.append(parentsTableRow);
+                                            parentsTableRow = $("<tr/>");
+                                        }
+                                        parentsTableRow.append(
+                                                $("<td class=\"small text-sm-center\"/>").text(datasetParentList[i]
+                                                                          .datasets[j].type));
+                                        var datasetRowName = $("<td class=\"text-sm-end\"/>");
+                                        datasetRowName.append($("<a class=\"small text-decoration-none\"/>")
+                                                            .text(datasetParentList[i]
+                                                                          .datasets[j].collection.name)
+                                                            .attr("href",
+                                                                  "collection/" + 
+                                                                  encodeURIComponent(datasetParentList[i]
+                                                                          .datasets[j].collection.uid)));
+                                        if(datasetParentList[i].datasets[j].collection.experiment) {
+                                            datasetRowName.append($("<span/>").html("&nbsp;"));
+                                            datasetRowName.append($("<span class=\"small text-secondary\"/>")
+                                               .text(datasetParentList[i].datasets[j].collection.experiment));
+                                        }
+                                        parentsTableRow.append(datasetRowName.attr("title",datasetParentList[i]
+                                                                                 .datasets[j].collection.type));                                    
+                                    }
+                                } else {
+                                    parentsTableRow.append(parentsTableRowMain);
+                                }
+                                parentsTableBody.append(parentsTableRow);
+                            }
+                            parentsRow.append($("<table class=\"table table-sm table-bordered\"/>")
+                                              .append(parentsTableBody));
+                            cardTableBody.append($("<tr/>")
+                                                     .append($("<td class=\"col-3\"/>"))
+                                                     .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                             .append($("<div class=\"small text-secondary\"/>")
+                                                                     .text("parents with dataset:"))
+                                                             .append(parentsRow)));
+                        }
                     }
                     if(response.offspring && (response.offspring.length>0)) {
                         var offspringRow = $("<td class=\"col-3\"/>").attr("scope","row");
