@@ -733,7 +733,7 @@ $( function() {
                     }
                     if(response.species_id) {
                         cardTableBody.append($("<tr/>").append($("<th class=\"col-3\"/>").text("Species"))
-                                                   .append($("<td class=\"col-3\"/>").attr("scope","row")
+                                                   .append($("<td class=\"col-3 fst-italic\"/>").attr("scope","row")
                                                                                      .text(response.species_name)));
                     }
                     if(response.year) {
