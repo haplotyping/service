@@ -1180,7 +1180,7 @@ $( function() {
                             }
                         }
                         pageLink = $("<a class=\"page-link\" href=\"#\"/>").text("»");
-                        pageLink.data("page",endPage);
+                        pageLink.data("page",endPage-1);
                         ulNav.append($("<li class=\"page-item\"/>").append(pageLink));
                         pageLink.click(function(event) {
                             event.preventDefault();
