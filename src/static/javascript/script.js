@@ -1139,7 +1139,7 @@ $( function() {
                         //create navigation
                         var startPage = 0
                         var endPage = Math.ceil(response.total/response.number)-1;
-                        var currentPage = Math.ceil(response.start/response.number)-1;
+                        var currentPage = Math.floor(response.start/response.number);
                         var navContainer = $("<nav class=\"d-flex flex-row\"/>");
                         var posNav = $("<div class=\"d-flex flex-fill justify-content-start\"/>");
                         posNav.append($("<div class=\"ml-1 my-2 text-info\"/>")
