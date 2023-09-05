@@ -1184,8 +1184,8 @@ $( function() {
                         ulNav.append($("<li class=\"page-item\"/>").append(pageLink));
                         pageLink.click(function(event) {
                             event.preventDefault();
-                            getCollectionList(oContainer,endPage*number,number);
-                            window.location.hash = "page"+endPage;
+                            getCollectionList(oContainer,(endPage-1)*number,number);
+                            window.location.hash = "page"+(endPage-1);
                             return false;
                         });
                         oContainer.append(navContainer);
