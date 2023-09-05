@@ -1138,8 +1138,9 @@ $( function() {
                         container.html("");
                         //create navigation
                         var startPage = 0
-                        var endPage = Math.ceil(response.total/response.number)-1;
+                        var endPage = Math.ceil(response.total/response.number);
                         var currentPage = Math.floor(response.start/response.number);
+                        console.log(startPage,endPage,currentPage);
                         var navContainer = $("<nav class=\"d-flex flex-row\"/>");
                         var posNav = $("<div class=\"d-flex flex-fill justify-content-start\"/>");
                         posNav.append($("<div class=\"ml-1 my-2 text-info\"/>")
@@ -1159,7 +1160,7 @@ $( function() {
                         });
                         var leftSize = (currentPage>=endPage-1) ? (3-(endPage-currentPage)) : 1;
                         var rightSize = (currentPage<=1) ? (3-currentPage) : 1;
-                        for(var i = startPage; i<=endPage; i++) {
+                        for(var i = startPage; i<endPage; i++) {
                             if((i>=currentPage-leftSize)&&(i<=currentPage+rightSize)) {
                                 pageLink = $("<a class=\"page-link\" href=\"#\"/>").text(i+1);
                                 pageLink.data("page",i);
